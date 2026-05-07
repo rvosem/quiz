@@ -1,5 +1,5 @@
 const CORRECT_PIN = "1234";
-const TOPICS = ["KOC", "KXC", "KTC", "test"];
+const TOPICS = ["KOC", "KXC", "KTC"];
 const RANGE_SIZE = 100;
 const STORAGE_KEY = 'exam_progress_v3';
 
