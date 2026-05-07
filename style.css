@@ -4,80 +4,104 @@
   --text: #f8fafc;
   --text-muted: #94a3b8;
   --primary: #3b82f6;
+  --primary-hover: #2563eb;
   --correct: #22c55e;
   --wrong: #ef4444;
   --border: #334155;
   --radius: 12px;
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg); color: var(--text);
-  min-height: 100vh; display: flex; flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   -webkit-tap-highlight-color: transparent;
 }
-header {
-  padding: 10px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.header-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  touch-action: manipulation;
-}
-.header-btn:active { opacity: 0.7; }
-#counter { font-size: 0.9rem; color: var(--text-muted); text-align: center; }
-.live-stats { font-size: 0.9rem; color: var(--text); white-space: nowrap; }
 
-/* Адаптив для очень маленьких экранов */
-@media (max-width: 360px) {
-  header { gap: 6px; padding: 8px 10px; }
-  .header-btn, #counter, .live-stats { font-size: 0.8rem; }
-}
+.hidden { display: none !important; }
 
 /* PIN Overlay */
 #pin-overlay {
-  position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 16px; z-index: 50;
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; z-index: 50;
 }
-#pin-overlay input {
+#pin-overlay h1 { margin-bottom: 10px; }
+#pin-input {
   width: 140px; padding: 16px; border: 2px solid var(--border); border-radius: var(--radius);
   background: var(--card); color: var(--text); font-size: 2rem; text-align: center;
   letter-spacing: 10px; font-family: monospace;
 }
-#pin-btn, .topic-btn, .nav-btn {
-  padding: 16px 24px; border: none; border-radius: var(--radius); cursor: pointer;
-  font-size: 1rem; font-weight: 500; touch-action: manipulation; transition: opacity 0.2s;
+#pin-btn {
+  padding: 16px 24px; border: none; border-radius: var(--radius); background: var(--primary);
+  color: #fff; font-size: 1rem; font-weight: 500; cursor: pointer; touch-action: manipulation;
 }
-#pin-btn, .nav-btn { background: var(--primary); color: #fff; }
-.topic-btn { background: var(--card); color: var(--text); border: 2px solid var(--border); width: 100%; max-width: 400px; margin-bottom: 12px; text-align: left; padding-left: 20px; }
-.topic-btn:active, .nav-btn:active, #pin-btn:active { opacity: 0.8; }
+#pin-btn:active { opacity: 0.8; }
 #pin-error { color: var(--wrong); min-height: 20px; font-size: 0.9rem; }
 
-/* Quiz UI */
+/* Topic Selection */
+#topic-select { padding: 20px 16px; flex: 1; display: flex; flex-direction: column; align-items: center; }
+#topics-container { width: 100%; max-width: 400px; margin-top: 20px; }
+.topic-btn {
+  width: 100%; padding: 18px 20px; margin-bottom: 12px; border: 2px solid var(--border);
+  border-radius: var(--radius); background: var(--card); color: var(--text);
+  font-size: 1rem; font-weight: 500; text-align: left; cursor: pointer; touch-action: manipulation;
+}
+.topic-btn:active { opacity: 0.8; }
+
+/* Header */
+header {
+  padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; background: var(--card); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.header-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+  padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; white-space: nowrap; touch-action: manipulation;
+}
+.header-btn:active { opacity: 0.7; }
+#counter { font-size: 0.9rem; color: var(--text-muted); text-align: center; flex: 1; }
+.live-stats { font-size: 0.9rem; color: var(--text); white-space: nowrap; }
+
+/* Main Quiz Area */
+main#quiz-main { flex: 1; padding: 16px; max-width: 640px; margin: 0 auto; width: 100%; }
+.card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+h2 { font-size: 1.2rem; line-height: 1.45; margin-bottom: 18px; }
 .options { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
 .opt-btn {
-  width: 100%; padding: 18px; border: 2px solid var(--border); border-radius: var(--radius);
-  background: var(--card); color: var(--text); font-size: 1rem; text-align: left; cursor: pointer;
+  width: 100%; padding: 16px 18px; border: 2px solid var(--border); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font-size: 1rem; text-align: left;
+  cursor: pointer; touch-action: manipulation; transition: all 0.2s;
 }
 .opt-btn.correct { border-color: var(--correct); background: #064e3b; color: #bbf7d0; }
 .opt-btn.wrong { border-color: var(--wrong); background: #450a0a; color: #fecaca; }
 .opt-btn.disabled { pointer-events: none; opacity: 0.7; }
-#feedback { margin-top: 12px; min-height: 24px; font-weight: 500; }
-footer { padding: 12px 16px; max-width: 640px; margin: 0 auto; width: 100%; display: flex; gap: 10px; }
+#feedback { margin-top: 14px; min-height: 24px; font-weight: 500; }
+
+/* Footer Navigation */
+footer#quiz-footer { padding: 12px 16px; max-width: 640px; margin: 0 auto; width: 100%; display: flex; gap: 10px; }
+.nav-btn {
+  flex: 1; padding: 16px; border: none; border-radius: var(--radius); background: var(--primary);
+  color: #fff; font-size: 1rem; font-weight: 500; cursor: pointer; touch-action: manipulation;
+}
 .nav-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+.nav-btn:active:not(:disabled) { background: var(--primary-hover); }
+
+/* Results Screen */
+#results-screen { padding: 20px 16px; flex: 1; display: flex; flex-direction: column; align-items: center; }
+.results-stats { margin: 24px 0; font-size: 1.2rem; line-height: 2; width: 100%; max-width: 300px; }
+.results-stats p { margin-bottom: 8px; }
+
+/* Mobile Responsive */
+@media (max-width: 360px) {
+  header { gap: 6px; padding: 8px 10px; }
+  .header-btn, #counter, .live-stats { font-size: 0.8rem; }
+  h2 { font-size: 1.1rem; }
+  .opt-btn, .nav-btn, .topic-btn { padding: 14px 16px; font-size: 0.95rem; }
+}

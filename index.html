@@ -8,10 +8,10 @@
 </head>
 <body>
 
-  <!-- PIN Ввод -->
+  <!-- Экран PIN -->
   <div id="pin-overlay">
     <h1>Введите PIN</h1>
-    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••">
+    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••" autocomplete="off">
     <button id="pin-btn">Войти</button>
     <p id="pin-error"></p>
   </div>
@@ -19,10 +19,10 @@
   <!-- Выбор темы -->
   <main id="topic-select" class="hidden" style="text-align: center; padding-top: 40px;">
     <h1>Выберите тему</h1>
-    <div id="topics-container" style="margin-top: 24px;"></div>
+    <div id="topics-container"></div>
   </main>
 
-    <!-- Тест -->
+  <!-- Интерфейс теста -->
   <header id="quiz-header" class="hidden">
     <button id="back-to-topics-header-btn" class="header-btn">← Темы</button>
     <span id="counter">1 / 10</span>
@@ -40,10 +40,10 @@
     <button id="next-btn" class="nav-btn">Далее →</button>
   </footer>
 
-  <!-- Результаты -->
+  <!-- Экран результатов -->
   <main id="results-screen" class="hidden" style="text-align: center; padding-top: 40px;">
     <h1>Результаты теста</h1>
-    <div style="margin: 24px 0; font-size: 1.2rem; line-height: 2;">
+    <div class="results-stats">
       <p>✅ Правильных: <b id="res-correct">0</b></p>
       <p>❌ Неправильных: <b id="res-wrong">0</b></p>
       <p>📝 Всего вопросов: <b id="res-total">0</b></p>
