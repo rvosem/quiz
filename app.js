@@ -1,7 +1,7 @@
 const CORRECT_PIN = "1234";
-const TOPICS = ["KOC", "KXC", "KTC"];
+const TOPICS = ["KOC", "KXC", "KTC", "test"];
 const RANGE_SIZE = 100;
-const STORAGE_KEY = 'exam_progress';
+const STORAGE_KEY = 'exam_progress_v2';
 
 let allQuestions = [];
 let currentQuestions = [];
@@ -9,40 +9,31 @@ let currentIndex = 0;
 let correctCount = 0;
 let wrongCount = 0;
 let questionStates = [];
+let currentPackInfo = { topic: '', start: 0, end: 0 };
 
 // 🗄 Логика сохранения прогресса
-function getStorage() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-function saveStorage(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-
-function getTopicProgress(topic) {
-  const storage = getStorage();
-  let total = 0, correct = 0, wrong = 0;
-  for (let key in storage) {
-    if (key.startsWith(topic + '_')) {
-      const p = storage[key];
-      total += (p.index || 0);
-      correct += (p.correct || 0);
-      wrong += (p.wrong || 0);
-    }
-  }
-  return { total, correct, wrong };
+function getStorage() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveStorage(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch { console.warn('Не удалось сохранить прогресс'); }
 }
 
 function saveCurrentProgress() {
   const storage = getStorage();
-  const key = `${currentQuestions.topic}_${currentQuestions.start}_${currentQuestions.end}`;
-  storage[key] = { index: currentIndex, correct: correctCount, wrong: wrongCount };
+  const key = `${currentPackInfo.topic}_${currentPackInfo.start}_${currentPackInfo.end}`;
+  storage[key] = {
+    index: currentIndex,
+    correct: correctCount,
+    wrong: wrongCount,
+    states: questionStates // Сохраняем полную карту ответов
+  };
   saveStorage(storage);
 }
 
-function resetAllProgress() {
-  if (confirm('⚠️ Вы уверены, что хотите сбросить ВЕСЬ прогресс по всем темам? Это действие нельзя отменить.')) {
-    localStorage.removeItem(STORAGE_KEY);
-    showTopicSelector();
-  }
-}
-
-// 🔀 Перемешивание массива
+// 🔀 Перемешивание массива (Fisher-Yates)
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -108,10 +99,17 @@ function showTopicSelector() {
     const btn = document.createElement('button');
     btn.className = 'topic-btn';
     const total = allQuestions.filter(q => q.topic === topic).length;
-    const prog = getTopicProgress(topic);
     
-    // Формируем текст с прогрессом
-    let progressText = prog.total > 0 ? ` | Решено: ${prog.total}/${total}` : '';
+    // Подсчёт общего прогресса по теме
+    const storage = getStorage();
+    let totalAnswered = 0;
+    for (let key in storage) {
+      if (key.startsWith(topic + '_') && storage[key].states) {
+        totalAnswered += storage[key].states.filter(s => s && s.answered).length;
+      }
+    }
+    
+    const progressText = totalAnswered > 0 ? ` | Решено: ${totalAnswered}/${total}` : '';
     btn.textContent = `${topic} (${total} вопр.${progressText})`;
     btn.onclick = () => showRangeSelector(topic);
     container.appendChild(btn);
@@ -119,14 +117,18 @@ function showTopicSelector() {
 
   // Кнопка сброса прогресса
   const resetBtn = document.createElement('button');
-  resetBtn.id = 'reset-progress-btn';
   resetBtn.className = 'topic-btn';
   resetBtn.style.marginTop = '20px';
   resetBtn.style.background = 'var(--wrong)';
   resetBtn.style.borderColor = 'var(--wrong)';
   resetBtn.style.color = '#fff';
   resetBtn.textContent = '🗑 Сбросить весь прогресс';
-  resetBtn.onclick = resetAllProgress;
+  resetBtn.onclick = () => {
+    if (confirm('⚠️ Сбросить ВЕСЬ прогресс? Это действие нельзя отменить.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      showTopicSelector();
+    }
+  };
   container.appendChild(resetBtn);
 
   hideAllScreens();
@@ -138,6 +140,7 @@ function showRangeSelector(topic) {
   const container = document.getElementById('ranges-container');
   document.getElementById('range-title').textContent = topic;
   container.innerHTML = '';
+  const storage = getStorage();
 
   for (let i = 0; i < filtered.length; i += RANGE_SIZE) {
     const start = i + 1;
@@ -145,18 +148,13 @@ function showRangeSelector(topic) {
     const btn = document.createElement('button');
     btn.className = 'range-btn';
     
-    // Проверяем сохраненный прогресс для этой пачки
-    const storage = getStorage();
     const key = `${topic}_${start}_${end}`;
-    const saved = storage[key] || { index: 0, correct: 0, wrong: 0 };
-    
-    let suffix = '';
-    if (saved.index > 0) {
-      suffix = ` (Решено: ${saved.index}/${end - i})`;
-    }
+    const saved = storage[key];
+    const answeredCount = saved?.states ? saved.states.filter(s => s?.answered).length : 0;
+    const suffix = answeredCount > 0 ? ` (Решено: ${answeredCount}/${end - start})` : '';
     
     btn.textContent = `Вопросы ${start}-${end}${suffix}`;
-    btn.onclick = () => startQuiz(topic, start, end, filtered.slice(i, end), saved);
+    btn.onclick = () => startQuiz(topic, start, end, filtered.slice(i, end), saved || {});
     container.appendChild(btn);
   }
 
@@ -167,18 +165,21 @@ function showRangeSelector(topic) {
 document.getElementById('back-to-topics-from-range').onclick = showTopicSelector;
 
 function startQuiz(topic, start, end, questionsChunk, savedData) {
+  currentPackInfo = { topic, start, end };
   currentQuestions = questionsChunk;
-  currentQuestions.topic = topic;
-  currentQuestions.start = start;
-  currentQuestions.end = end;
-  
-  // Загружаем сохраненное состояние или начинаем с нуля
-  currentIndex = savedData.index || 0;
-  correctCount = savedData.correct || 0;
-  wrongCount = savedData.wrong || 0;
-  questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
 
-  // Перемешиваем варианты ответов (сохраняем привязку к правильному ответу)
+  // Восстановление или инициализация состояния
+  if (savedData.states && Array.isArray(savedData.states)) {
+    questionStates = currentQuestions.map((_, i) => savedData.states[i] || { answered: false, selected: -1 });
+  } else {
+    questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
+  }
+
+  currentIndex = savedData.index ?? 0;
+  correctCount = savedData.correct ?? 0;
+  wrongCount = savedData.wrong ?? 0;
+
+  // Перемешиваем варианты ответов (сохраняем привязку к правильному)
   currentQuestions = currentQuestions.map(q => {
     let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
     opts = shuffleArray(opts);
@@ -215,11 +216,13 @@ function showQuestion() {
     optionsEl.appendChild(btn);
   });
 
+  // Восстановление UI для отвеченного вопроса
   const state = questionStates[currentIndex];
   if (state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
     btns.forEach(b => b.classList.add('disabled'));
     btns[q.correct].classList.add('correct');
+    
     if (state.selected !== q.correct) {
       btns[state.selected].classList.add('wrong');
       document.getElementById('feedback').textContent = '❌ Было неверно';
@@ -260,7 +263,7 @@ function checkAnswer(selected, correct, clickedBtn) {
   }
   
   updateLiveStats();
-  saveCurrentProgress(); // 💾 Автосохранение после каждого ответа
+  saveCurrentProgress(); // 💾 Мгновенное сохранение при ответе
 }
 
 function updateLiveStats() {
@@ -268,7 +271,7 @@ function updateLiveStats() {
 }
 
 document.getElementById('next-btn').onclick = () => {
-  saveCurrentProgress(); // 💾 Сохраняем позицию при переходе
+  saveCurrentProgress();
   if (currentIndex < currentQuestions.length - 1) {
     currentIndex++;
     showQuestion();
@@ -296,8 +299,6 @@ function showResults() {
   document.getElementById('res-total').textContent = currentQuestions.length;
 }
 
-document.getElementById('back-to-topics-btn').onclick = () => {
-  showTopicSelector();
-};
+document.getElementById('back-to-topics-btn').onclick = showTopicSelector;
 
 window.addEventListener('DOMContentLoaded', () => pinInput.focus());
