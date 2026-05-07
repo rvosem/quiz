@@ -1,685 +1,89 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажер стоматология</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Верхняя панель с навигацией и счетчиком */
-        .top-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .pack-selector {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .pack-selector button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .pack-selector button:hover,
-        .pack-selector button.active {
-            background: white;
-            color: #667eea;
-        }
-
-        .score-counter {
-            display: flex;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 20px;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
-            white-space: nowrap;
-        }
-
-        .score-item {
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .score-item.correct {
-            color: #4ade80;
-        }
-
-        .score-item.incorrect {
-            color: #f87171;
-        }
-
-        /* Контейнер для кружков - прокручиваемый */
-        .circles-container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-            max-height: 120px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        .circles-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: flex-start;
-        }
-
-        .circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .circle:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        .circle.active {
-            background: white;
-            color: #667eea;
-            transform: scale(1.15);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .circle.correct {
-            background: #4ade80;
-            color: white;
-        }
-
-        .circle.incorrect {
-            background: #f87171;
-            color: white;
-        }
-
-        .circle.answered {
-            opacity: 0.7;
-        }
-
-        /* Карточка вопроса */
-        .question-card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        .question-number {
-            color: #667eea;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .question-text {
-            font-size: 20px;
-            color: #2d3748;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-
-        .answers {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .answer-option {
-            padding: 15px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 16px;
-            background: #f7fafc;
-        }
-
-        .answer-option:hover {
-            border-color: #667eea;
-            background: #edf2f7;
-            transform: translateX(5px);
-        }
-
-        .answer-option.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-
-        .answer-option.correct {
-            border-color: #4ade80;
-            background: #4ade80;
-            color: white;
-        }
-
-        .answer-option.incorrect {
-            border-color: #f87171;
-            background: #f87171;
-            color: white;
-        }
-
-        .answer-option.disabled {
-            pointer-events: none;
-            opacity: 0.6;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #4a5568;
-        }
-
-        .btn-secondary:hover {
-            background: #cbd5e0;
-        }
-
-        .stats {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            color: white;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .stats h3 {
-            margin-bottom: 15px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-item {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        /* Адаптивность для мобильных */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .top-panel {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .pack-selector {
-                justify-content: center;
-                order: 2;
-            }
-
-            .score-counter {
-                justify-content: center;
-                order: 1;
-                width: 100%;
-            }
-
-            .circles-container {
-                max-height: 100px;
-                padding: 10px;
-            }
-
-            .circle {
-                width: 35px;
-                height: 35px;
-                font-size: 12px;
-            }
-
-            .question-card {
-                padding: 20px;
-            }
-
-            .question-text {
-                font-size: 18px;
-            }
-
-            .answer-option {
-                font-size: 14px;
-                padding: 12px 15px;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
-
-        /* Скроллбар для контейнера кружков */
-        .circles-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .circles-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-        }
-
-        .circles-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-
-        .circles-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Экзамен</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Верхняя панель -->
-        <div class="top-panel">
-            <div class="score-counter">
-                <div class="score-item correct">✓ <span id="correctCount">0</span></div>
-                <div class="score-item incorrect">✗ <span id="incorrectCount">0</span></div>
-                <div class="score-item">Всего: <span id="totalCount">0</span></div>
-            </div>
-            <div class="pack-selector">
-                <button onclick="loadPack(1)" class="active" id="pack1">1-100</button>
-                <button onclick="loadPack(2)" id="pack2">101-200</button>
-                <button onclick="loadPack(3)" id="pack3">201-300</button>
-            </div>
-        </div>
 
-        <!-- Контейнер для кружков -->
-        <div class="circles-container">
-            <div class="circles-wrapper" id="circlesWrapper"></div>
-        </div>
+  <!-- Экран PIN -->
+  <div id="pin-overlay">
+    <h1>Введите PIN</h1>
+    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••" autocomplete="off">
+    <div class="pin-keypad">
+      <button class="key-btn" data-num="1">1</button>
+      <button class="key-btn" data-num="2">2</button>
+      <button class="key-btn" data-num="3">3</button>
+      <button class="key-btn" data-num="4">4</button>
+      <button class="key-btn" data-num="5">5</button>
+      <button class="key-btn" data-num="6">6</button>
+      <button class="key-btn" data-num="7">7</button>
+      <button class="key-btn" data-num="8">8</button>
+      <button class="key-btn" data-num="9">9</button>
+      <button class="key-btn empty" data-num="0"><span>0</span></button>
+      <button class="key-btn backspace" data-num="back">⌫</button>
+    </div>
+    <p id="pin-error"></p>
+  </div>
 
-        <!-- Карточка вопроса -->
-        <div class="question-card">
-            <div class="question-number" id="questionNumber">Вопрос 1</div>
-            <div class="question-text" id="questionText">Загрузка вопроса...</div>
-            <div class="answers" id="answersContainer"></div>
-            <div class="controls">
-                <button class="btn btn-secondary" onclick="previousQuestion()" id="prevBtn">← Предыдущий</button>
-                <button class="btn btn-primary" onclick="nextQuestion()" id="nextBtn" disabled>Следующий →</button>
-            </div>
-        </div>
+  <!-- Выбор темы -->
+  <main id="topic-select" class="hidden" style="text-align: center; padding-top: 40px;">
+    <h1>Выберите тему</h1>
+    <div id="topics-container"></div>
+  </main>
 
-        <!-- Статистика -->
-        <div class="stats">
-            <h3>📊 Статистика</h3>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="answeredCount">0</div>
-                    <div class="stat-label">Отвечено</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="remainingCount">0</div>
-                    <div class="stat-label">Осталось</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="percentage">0%</div>
-                    <div class="stat-label">Прогресс</div>
-                </div>
-            </div>
-        </div>
+  <!-- Выбор диапазона (Пачки вопросов) -->
+  <main id="range-select" class="hidden" style="text-align: center; padding-top: 40px;">
+    <h1 id="range-title">Тема</h1>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">Выберите пачку вопросов</p>
+    <div id="ranges-container"></div>
+    <button id="back-to-topics-from-range" class="header-btn" style="margin-top: 20px;">← Назад к темам</button>
+  </main>
+
+  <!-- Интерфейс теста -->
+  <header id="quiz-header" class="hidden">
+    <button id="back-to-topics-header-btn" class="header-btn">← Темы</button>
+    
+    <!-- Контейнер для кружков -->
+    <div id="circles-wrapper" class="circles-wrapper">
+      <div id="progress-circles" class="progress-circles">
+        <!-- Кружки генерируются JS -->
+      </div>
     </div>
 
-    <script>
-        // Глобальные переменные
-        let currentPack = 1;
-        let currentQuestionIndex = 0;
-        let questions = [];
-        let userAnswers = {};
-        let packStartNumbers = {
-            1: 1,
-            2: 101,
-            3: 201
-        };
+    <div class="header-actions">
+      <button id="reset-pack-btn" class="icon-btn danger" title="Сбросить эту пачку">🔄</button>
+      <span id="live-stats" class="live-stats">✅ 0 | ❌ 0</span>
+    </div>
+  </header>
+  
+  <main id="quiz-main" class="hidden">
+    <div class="card">
+      <h2 id="question"></h2>
+      <div id="options" class="options"></div>
+      <p id="feedback"></p>
+    </div>
+  </main>
 
-        // Загрузка вопросов из файла
-        async function loadQuestions() {
-            try {
-                const response = await fetch('KTC.txt');
-                const text = await response.text();
-                const allQuestions = parseQuestions(text);
-                
-                // Разделяем вопросы по пачкам (по 100 вопросов)
-                const pack1 = allQuestions.slice(0, 100);
-                const pack2 = allQuestions.slice(100, 200);
-                const pack3 = allQuestions.slice(200, 300);
-                
-                return {
-                    1: pack1,
-                    2: pack2,
-                    3: pack3
-                };
-            } catch (error) {
-                console.error('Ошибка загрузки вопросов:', error);
-                return { 1: [], 2: [], 3: [] };
-            }
-        }
+  <!-- Закрепленный футер -->
+  <footer id="quiz-footer" class="hidden">
+    <button id="prev-btn" class="nav-btn" disabled>← Назад</button>
+    <button id="next-btn" class="nav-btn">Далее →</button>
+  </footer>
 
-        // Парсинг вопросов из текста
-        function parseQuestions(text) {
-            const lines = text.split('\n');
-            const questions = [];
-            let currentQuestion = null;
-            let currentAnswers = [];
-            let correctAnswerIndex = -1;
+  <!-- Экран результатов -->
+  <main id="results-screen" class="hidden" style="text-align: center; padding-top: 40px;">
+    <h1>Результаты теста</h1>
+    <div class="results-stats">
+      <p>✅ Правильных: <b id="res-correct">0</b></p>
+      <p>❌ Неправильных: <b id="res-wrong">0</b></p>
+      <p>📝 Всего вопросов: <b id="res-total">0</b></p>
+    </div>
+    <button id="back-to-topics-btn" class="nav-btn topics-btn">К выбору тем</button>
+  </main>
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                if (line.startsWith('*')) {
-                    // Это правильный ответ
-                    if (currentQuestion) {
-                        currentAnswers.push(line.substring(1).trim());
-                        correctAnswerIndex = currentAnswers.length - 1;
-                    }
-                } else if (line && !line.startsWith('*') && currentQuestion === null) {
-                    // Это вопрос
-                    currentQuestion = line;
-                } else if (line && currentQuestion) {
-                    // Это вариант ответа
-                    currentAnswers.push(line);
-                } else if (!line && currentQuestion) {
-                    // Пустая строка - конец вопроса
-                    if (currentAnswers.length > 0 && correctAnswerIndex >= 0) {
-                        questions.push({
-                            text: currentQuestion,
-                            answers: [...currentAnswers],
-                            correct: correctAnswerIndex
-                        });
-                    }
-                    currentQuestion = null;
-                    currentAnswers = [];
-                    correctAnswerIndex = -1;
-                }
-            }
-
-            // Добавляем последний вопрос если есть
-            if (currentQuestion && currentAnswers.length > 0 && correctAnswerIndex >= 0) {
-                questions.push({
-                    text: currentQuestion,
-                    answers: [...currentAnswers],
-                    correct: correctAnswerIndex
-                });
-            }
-
-            return questions;
-        }
-
-        // Загрузка пачки вопросов
-        async function loadPack(packNum) {
-            currentPack = packNum;
-            currentQuestionIndex = 0;
-            
-            // Обновляем активную кнопку
-            document.querySelectorAll('.pack-selector button').forEach((btn, index) => {
-                btn.classList.toggle('active', index + 1 === packNum);
-            });
-
-            const allPacks = await loadQuestions();
-            questions = allPacks[packNum] || [];
-            
-            if (questions.length === 0) {
-                alert('В этой пачке нет вопросов');
-                return;
-            }
-
-            // Очищаем ответы для новой пачки
-            userAnswers = {};
-            
-            createCircles();
-            showQuestion();
-            updateStats();
-        }
-
-        // Создание кружков с номерами вопросов
-        function createCircles() {
-            const wrapper = document.getElementById('circlesWrapper');
-            wrapper.innerHTML = '';
-            
-            const startNum = packStartNumbers[currentPack];
-            
-            for (let i = 0; i < questions.length; i++) {
-                const circle = document.createElement('div');
-                circle.className = 'circle';
-                circle.textContent = startNum + i; // Реальный номер вопроса
-                circle.dataset.index = i;
-                circle.onclick = () => goToQuestion(i);
-                wrapper.appendChild(circle);
-            }
-        }
-
-        // Показать текущий вопрос
-        function showQuestion() {
-            if (questions.length === 0) return;
-            
-            const question = questions[currentQuestionIndex];
-            const startNum = packStartNumbers[currentPack];
-            
-            document.getElementById('questionNumber').textContent = 
-                `Вопрос ${startNum + currentQuestionIndex} из ${startNum + questions.length - 1}`;
-            document.getElementById('questionText').textContent = question.text;
-            
-            const answersContainer = document.getElementById('answersContainer');
-            answersContainer.innerHTML = '';
-            
-            question.answers.forEach((answer, index) => {
-                const answerDiv = document.createElement('div');
-                answerDiv.className = 'answer-option';
-                answerDiv.textContent = answer;
-                answerDiv.onclick = () => selectAnswer(index);
-                
-                // Если уже отвечали на этот вопрос
-                if (userAnswers[currentQuestionIndex] !== undefined) {
-                    answerDiv.classList.add('disabled');
-                    if (index === question.correct) {
-                        answerDiv.classList.add('correct');
-                    } else if (index === userAnswers[currentQuestionIndex] && 
-                               index !== question.correct) {
-                        answerDiv.classList.add('incorrect');
-                    }
-                }
-                
-                answersContainer.appendChild(answerDiv);
-            });
-            
-            // Обновляем активный кружок
-            document.querySelectorAll('.circle').forEach((circle, index) => {
-                circle.classList.remove('active');
-                if (index === currentQuestionIndex) {
-                    circle.classList.add('active');
-                }
-            });
-            
-            // Кнопки навигации
-            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
-            document.getElementById('nextBtn').disabled = userAnswers[currentQuestionIndex] === undefined;
-            
-            // Прокрутка к активному кружку
-            const activeCircle = document.querySelector('.circle.active');
-            if (activeCircle) {
-                activeCircle.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        // Выбор ответа
-        function selectAnswer(index) {
-            if (userAnswers[currentQuestionIndex] !== undefined) return;
-            
-            userAnswers[currentQuestionIndex] = index;
-            const question = questions[currentQuestionIndex];
-            
-            // Показываем правильные/неправильные ответы
-            const answerOptions = document.querySelectorAll('.answer-option');
-            answerOptions.forEach((option, i) => {
-                option.classList.add('disabled');
-                if (i === question.correct) {
-                    option.classList.add('correct');
-                } else if (i === index && i !== question.correct) {
-                    option.classList.add('incorrect');
-                }
-            });
-            
-            // Обновляем кружок
-            const circles = document.querySelectorAll('.circle');
-            circles[currentQuestionIndex].classList.add('answered');
-            if (index === question.correct) {
-                circles[currentQuestionIndex].classList.add('correct');
-            } else {
-                circles[currentQuestionIndex].classList.add('incorrect');
-            }
-            
-            document.getElementById('nextBtn').disabled = false;
-            updateStats();
-        }
-
-        // Переход к вопросу
-        function goToQuestion(index) {
-            currentQuestionIndex = index;
-            showQuestion();
-        }
-
-        // Следующий вопрос
-        function nextQuestion() {
-            if (currentQuestionIndex < questions.length - 1) {
-                currentQuestionIndex++;
-                showQuestion();
-            }
-        }
-
-        // Предыдущий вопрос
-        function previousQuestion() {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                showQuestion();
-            }
-        }
-
-        // Обновление статистики
-        function updateStats() {
-            let correct = 0;
-            let incorrect = 0;
-            let answered = 0;
-            
-            Object.keys(userAnswers).forEach(index => {
-                const qIndex = parseInt(index);
-                answered++;
-                if (userAnswers[qIndex] === questions[qIndex].correct) {
-                    correct++;
-                } else {
-                    incorrect++;
-                }
-            });
-            
-            document.getElementById('correctCount').textContent = correct;
-            document.getElementById('incorrectCount').textContent = incorrect;
-            document.getElementById('totalCount').textContent = questions.length;
-            document.getElementById('answeredCount').textContent = answered;
-            document.getElementById('remainingCount').textContent = questions.length - answered;
-            document.getElementById('percentage').textContent = 
-                questions.length > 0 ? Math.round((answered / questions.length) * 100) + '%' : '0%';
-        }
-
-        // Инициализация
-        window.onload = () => {
-            loadPack(1);
-        };
-    </script>
+  <script src="app.js"></script>
 </body>
 </html>
