@@ -1,5 +1,5 @@
 const CORRECT_PIN = "1234"; // ← ИЗМЕНИТЕ НА СВОЙ
-const TOPICS = ["Математика", "Физика", "Информатика"]; // ← ДОЛЖНЫ СОВПАДАТЬ С JSON
+const TOPICS = ["KOC", "KXC", "KTC"]; // ← ДОЛЖНЫ СОВПАДАТЬ С JSON
 
 let allQuestions = [];
 let currentQuestions = [];
