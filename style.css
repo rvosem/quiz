@@ -150,3 +150,39 @@ footer#quiz-footer {
   .opt-btn { padding: 14px 16px; font-size: 0.95rem; }
   .nav-btn { padding: 14px; font-size: 0.95rem; height: 48px; }
 }
+
+/* Стили для цифровой панели PIN */
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  margin-top: 20px;
+}
+.key-btn {
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.key-btn:active {
+  background: #334155;
+}
+.key-btn.empty {
+  visibility: hidden; /* Пустая ячейка для выравнивания 0 по центру */
+}
+.key-btn.backspace {
+  background: #334155;
+  font-size: 1.2rem;
+}
+.key-btn span {
+  display: block;
+  width: 100%;
+}

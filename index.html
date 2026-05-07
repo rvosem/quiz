@@ -11,8 +11,22 @@
   <!-- Экран PIN -->
   <div id="pin-overlay">
     <h1>Введите PIN</h1>
-    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••" autocomplete="off">
-    <button id="pin-btn">Войти</button>
+    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••" readonly autocomplete="off">
+    <div class="pin-keypad">
+      <button class="key-btn" data-num="1">1</button>
+      <button class="key-btn" data-num="2">2</button>
+      <button class="key-btn" data-num="3">3</button>
+      <button class="key-btn" data-num="4">4</button>
+      <button class="key-btn" data-num="5">5</button>
+      <button class="key-btn" data-num="6">6</button>
+      <button class="key-btn" data-num="7">7</button>
+      <button class="key-btn" data-num="8">8</button>
+      <button class="key-btn" data-num="9">9</button>
+      <button class="key-btn empty" data-num="0">
+        <span>0</span>
+      </button>
+      <button class="key-btn backspace" data-num="back">⌫</button>
+    </div>
     <p id="pin-error"></p>
   </div>
 

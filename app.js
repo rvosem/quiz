@@ -1,5 +1,5 @@
-const CORRECT_PIN = "1111";
-const TOPICS = ["KOC", "KXC", "KTC", "test"];
+const CORRECT_PIN = "1234"; 
+const TOPICS = ["KOC", "KXC", "KTC", "KTC"];
 
 let allQuestions = [];
 let currentQuestions = [];
@@ -27,11 +27,25 @@ function updateLiveStats() {
 
 // PIN Логика
 const pinInput = document.getElementById('pin-input');
-const pinBtn = document.getElementById('pin-btn');
 const pinError = document.getElementById('pin-error');
+const keypad = document.querySelector('.pin-keypad');
 
-pinInput.addEventListener('input', () => { if (pinInput.value.length === 4) checkPin(); });
-pinBtn.addEventListener('click', checkPin);
+keypad.addEventListener('click', (e) => {
+  if (e.target.classList.contains('key-btn')) {
+    const num = e.target.dataset.num;
+    
+    if (num === 'back') {
+      pinInput.value = pinInput.value.slice(0, -1);
+      pinError.textContent = '';
+    } else {
+      if (pinInput.value.length < 4) {
+        pinInput.value += num;
+        pinError.textContent = '';
+        if (pinInput.value.length === 4) checkPin();
+      }
+    }
+  }
+});
 
 function checkPin() {
   if (pinInput.value === CORRECT_PIN) {
@@ -40,7 +54,8 @@ function checkPin() {
   } else {
     pinError.textContent = 'Неверный PIN';
     pinInput.value = '';
-    pinInput.focus();
+    // Легкая вибрация на телефоне для обозначения ошибки
+    if (navigator.vibrate) navigator.vibrate(200);
   }
 }
 
