@@ -1,5 +1,5 @@
 const CORRECT_PIN = "1234"; 
-const TOPICS = ["KOC", "KXC", "KTC", "KTC"];
+const TOPICS = ["KOC", "KXC", "KTC", "test"];
 
 let allQuestions = [];
 let currentQuestions = [];
