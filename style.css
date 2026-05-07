@@ -1,0 +1,27 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f4f6f8; color: #111;
+  min-height: 100vh; display: flex; flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+header { padding: 14px; text-align: center; font-weight: 600; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10; }
+main { flex: 1; padding: 16px; max-width: 640px; margin: 0 auto; width: 100%; }
+.card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+h2 { font-size: 1.2rem; margin-bottom: 18px; line-height: 1.45; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn {
+  width: 100%; padding: 16px 18px; border: 2px solid #e2e8f0; border-radius: 10px;
+  background: #fff; font-size: 1rem; text-align: left; cursor: pointer; transition: border-color 0.2s;
+  touch-action: manipulation;
+}
+.opt-btn.correct { border-color: #16a34a; background: #f0fdf4; color: #14532d; }
+.opt-btn.wrong { border-color: #dc2626; background: #fef2f2; color: #7f1d1d; }
+.opt-btn.disabled { pointer-events: none; opacity: 0.75; }
+#feedback { margin-top: 14px; min-height: 22px; font-weight: 500; }
+footer { padding: 12px 16px; max-width: 640px; margin: 0 auto; width: 100%; display: flex; gap: 10px; }
+.nav-btn {
+  flex: 1; padding: 16px; border: none; border-radius: 10px; background: #2563eb; color: #fff;
+  font-size: 1rem; font-weight: 500; cursor: pointer; touch-action: manipulation;
+}
+.nav-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
