@@ -2,7 +2,6 @@ const CORRECT_PIN = "1234";
 const TOPICS = ["KOC", "KXC", "KTC"];
 const RANGE_SIZE = 100;
 const STORAGE_KEY = 'exam_progress_v3';
-
 let allQuestions = [];
 let currentQuestions = [];
 let currentIndex = 0;
@@ -63,7 +62,8 @@ function saveCurrentProgress() {
     index: currentIndex,
     correct: correctCount,
     wrong: wrongCount,
-    states: questionStates
+    states: questionStates,
+    shuffledQuestions: currentQuestions // 💾 Запоминаем порядок ответов
   };
   saveStorage(storage);
 }
@@ -104,7 +104,6 @@ function showTopicSelector() {
     btn.onclick = () => showRangeSelector(topic);
     container.appendChild(btn);
   });
-
   const resetBtn = document.createElement('button');
   resetBtn.className = 'topic-btn';
   resetBtn.style.marginTop = '20px';
@@ -119,7 +118,6 @@ function showTopicSelector() {
     }
   };
   container.appendChild(resetBtn);
-
   hideAllScreens();
   document.getElementById('topic-select').classList.remove('hidden');
 }
@@ -130,7 +128,6 @@ function showRangeSelector(topic) {
   document.getElementById('range-title').textContent = topic;
   container.innerHTML = '';
   const storage = getStorage();
-
   for (let i = 0; i < filtered.length; i += RANGE_SIZE) {
     const start = i + 1;
     const end = Math.min(i + RANGE_SIZE, filtered.length);
@@ -162,50 +159,53 @@ function shuffleArray(array) {
 
 function startQuiz(topic, start, end, questionsChunk, savedData) {
   currentPackInfo = { topic, start, end };
-  currentQuestions = questionsChunk;
-  
-  if (savedData.states && Array.isArray(savedData.states)) {
-    questionStates = currentQuestions.map((_, i) => savedData.states[i] || { answered: false, selected: -1 });
+
+  // Если есть сохранённый порядок ответов — восстанавливаем его
+  if (savedData && savedData.shuffledQuestions) {
+    currentQuestions = savedData.shuffledQuestions;
+  } else {
+    // Первый запуск или сброс: перемешиваем варианты
+    currentQuestions = questionsChunk.map(q => {
+      let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+      opts = shuffleArray(opts);
+      return {
+        question: q.question,
+        options: opts.map(o => o.text),
+        correct: opts.findIndex(o => o.isCorrect)
+      };
+    });
+  }
+
+  // Восстанавливаем состояния или создаём новые
+  if (savedData && savedData.states) {
+    questionStates = savedData.states;
   } else {
     questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
   }
-  
-  currentIndex = savedData.index ?? 0;
-  correctCount = savedData.correct ?? 0;
-  wrongCount = savedData.wrong ?? 0;
-  
-  currentQuestions = currentQuestions.map(q => {
-    let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
-    opts = shuffleArray(opts);
-    return {
-      question: q.question,
-      options: opts.map(o => o.text),
-      correct: opts.findIndex(o => o.isCorrect)
-    };
-  });
+
+  currentIndex = savedData?.index ?? 0;
+  correctCount = savedData?.correct ?? 0;
+  wrongCount = savedData?.wrong ?? 0;
 
   hideAllScreens();
   document.getElementById('quiz-header').classList.remove('hidden');
   document.getElementById('quiz-main').classList.remove('hidden');
   document.getElementById('quiz-footer').classList.remove('hidden');
-  
+
   renderCircles();
   showQuestion();
 }
 
-// --- ОТРИСОВКА КРУГОВ (ОБНОВЛЕНО) ---
 function renderCircles() {
   progressCirclesEl.innerHTML = '';
   const total = currentQuestions.length;
-  const startNum = currentPackInfo.start; // Начальный номер пачки (например, 201)
-
-  for (let i = 0; i < total; i++) {
+  const windowSize = 10;
+  let startIdx = Math.max(0, currentIndex - windowSize);
+  let endIdx = Math.min(total, currentIndex + windowSize + 1);
+  for (let i = startIdx; i < endIdx; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle';
-    
-    // Пишем глобальный номер (startNum + индекс)
-    circle.textContent = startNum + i; 
-
+    circle.textContent = currentPackInfo.start + i;
     const state = questionStates[i];
     if (state && state.answered) {
       if (state.selected === currentQuestions[i].correct) {
@@ -216,21 +216,16 @@ function renderCircles() {
     } else {
       circle.classList.add('future');
     }
-
     if (i === currentIndex) {
       circle.classList.add('active');
       circle.classList.remove('future');
     }
-
     circle.onclick = () => {
       currentIndex = i;
       showQuestion();
     };
-
     progressCirclesEl.appendChild(circle);
   }
-
-  // Скролл к активному кругу
   setTimeout(() => {
     const activeCircle = document.querySelector('.circle.active');
     if (activeCircle && circlesWrapper) {
@@ -252,7 +247,6 @@ function showQuestion() {
     btn.onclick = () => checkAnswer(i, q.correct, btn);
     optionsEl.appendChild(btn);
   });
-
   const state = questionStates[currentIndex];
   if (state && state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
@@ -267,12 +261,10 @@ function showQuestion() {
       document.getElementById('feedback').style.color = 'var(--correct)';
     }
   }
-
   document.getElementById('prev-btn').disabled = currentIndex === 0;
   const nextBtn = document.getElementById('next-btn');
   nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? 'Завершить' : 'Далее →';
   nextBtn.disabled = false;
-
   renderCircles();
   updateLiveStats();
 }
