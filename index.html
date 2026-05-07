@@ -44,13 +44,19 @@
 
   <!-- Интерфейс теста -->
   <header id="quiz-header" class="hidden">
-    <button id="nav-jump-btn" class="icon-btn" title="Перейти к вопросу">🔢</button>
+    <button id="back-to-topics-header-btn" class="header-btn">← Темы</button>
     
-    <div id="progress-circles" class="progress-circles">
-      <!-- Кружки генерируются JS -->
+    <!-- Контейнер для кружков с прокруткой -->
+    <div id="circles-wrapper" class="circles-wrapper">
+      <div id="progress-circles" class="progress-circles">
+        <!-- Кружки генерируются JS -->
+      </div>
     </div>
 
-    <button id="reset-pack-btn" class="icon-btn danger" title="Сбросить эту пачку">🗑️</button>
+    <div class="header-actions">
+      <button id="reset-pack-btn" class="icon-btn danger" title="Сбросить эту пачку">🔄</button>
+      <span id="live-stats" class="live-stats">✅ 0 | ❌ 0</span>
+    </div>
   </header>
   
   <main id="quiz-main" class="hidden">

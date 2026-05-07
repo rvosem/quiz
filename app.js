@@ -1,7 +1,7 @@
 const CORRECT_PIN = "1234";
 const TOPICS = ["KOC", "KXC", "KTC"];
 const RANGE_SIZE = 100;
-const STORAGE_KEY = 'exam_progress_v3'; // Обновил версию, чтобы сбросить старые данные
+const STORAGE_KEY = 'exam_progress_v3';
 
 let allQuestions = [];
 let currentQuestions = [];
@@ -14,9 +14,11 @@ let currentPackInfo = { topic: '', start: 0, end: 0 };
 // Элементы UI
 const pinInput = document.getElementById('pin-input');
 const keypad = document.querySelector('.pin-keypad');
-const progressCirclesEl = document.getElementById('progress-circles');
+const liveStatsEl = document.getElementById('live-stats');
 const jumpModal = document.getElementById('jump-modal');
 const jumpInput = document.getElementById('jump-input');
+const circlesWrapper = document.getElementById('circles-wrapper');
+const progressCirclesEl = document.getElementById('progress-circles');
 
 // --- PIN ЛОГИКА ---
 keypad.addEventListener('click', (e) => {
@@ -94,6 +96,7 @@ function showTopicSelector() {
     btn.className = 'topic-btn';
     const total = allQuestions.filter(q => q.topic === topic).length;
     
+    // Подсчёт общего прогресса по теме
     const storage = getStorage();
     let totalAnswered = 0;
     for (let key in storage) {
@@ -201,39 +204,57 @@ function startQuiz(topic, start, end, questionsChunk, savedData) {
 
 function renderCircles() {
   progressCirclesEl.innerHTML = '';
-  // Показываем максимум 7 кружков вокруг текущего или просто первые 7, если вопросов мало
-  // Для простоты покажем фиксированные 7 слотов, соответствующих первым 7 вопросам пачки, 
-  // или динамически, если нужно. Но лучше сделать адаптивно.
-  // Сделаем так: показываем кружки для всех вопросов, но если их много, скроллим или показываем окно.
-  // По ТЗ: "7 кругов". Давайте сделаем 7 кругов, соответствующих вопросам 1-7 текущей пачки.
   
-  const limit = Math.min(currentQuestions.length, 7);
-  for (let i = 0; i < limit; i++) {
+  // Генерируем кружки для всех вопросов (виртуально), но отрисовываем с учетом прокрутки
+  // Для производительности и простоты отрисовки "скользящего окна" мы будем перерисовывать
+  // только видимую часть или все, но управлять позицией скролла.
+  // Проще всего создать все кружки, но скрыть лишние, либо перерисовывать.
+  // Сделаем перерисовку "окна" вокруг currentIndex для легковесности.
+  
+  const total = currentQuestions.length;
+  // Показываем от (currentIndex - 3) до (currentIndex + 3), с границами массива
+  let startIdx = Math.max(0, currentIndex - 3);
+  let endIdx = Math.min(total, currentIndex + 4); // +4 так как slice не включает конец
+
+  for (let i = startIdx; i < endIdx; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle';
     circle.id = `circle-${i}`;
-    progressCirclesEl.appendChild(circle);
-  }
-  updateCirclesUI();
-}
+    circle.textContent = i + 1; // Номер вопроса
+    
+    // Определяем статус
+    const state = questionStates[i];
+    if (state && state.answered) {
+      if (state.selected === currentQuestions[i].correct) {
+        circle.classList.add('correct');
+      } else {
+        circle.classList.add('wrong');
+      }
+    } else {
+      circle.classList.add('future');
+    }
 
-function updateCirclesUI() {
-  const circles = document.querySelectorAll('.circle');
-  circles.forEach((circle, i) => {
-    circle.classList.remove('active', 'correct', 'wrong');
     if (i === currentIndex) {
       circle.classList.add('active');
-    } else {
-      const state = questionStates[i];
-      if (state && state.answered) {
-        if (state.selected === currentQuestions[i].correct) {
-          circle.classList.add('correct');
-        } else {
-          circle.classList.add('wrong');
-        }
-      }
+      // Убираем класс future, если он был добавлен
+      circle.classList.remove('future');
     }
-  });
+    
+    circle.onclick = () => {
+        currentIndex = i;
+        showQuestion();
+    };
+
+    progressCirclesEl.appendChild(circle);
+  }
+  
+  // Прокручиваем к активному элементу
+  setTimeout(() => {
+    const activeCircle = document.querySelector('.circle.active');
+    if (activeCircle && circlesWrapper) {
+      activeCircle.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, 50);
 }
 
 function showQuestion() {
@@ -252,6 +273,7 @@ function showQuestion() {
     optionsEl.appendChild(btn);
   });
 
+  // Восстановление UI для отвеченного вопроса
   const state = questionStates[currentIndex];
   if (state && state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
@@ -273,7 +295,8 @@ function showQuestion() {
   nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? 'Завершить' : 'Далее →';
   nextBtn.disabled = false;
 
-  updateCirclesUI();
+  renderCircles(); // Перерисовываем кружки
+  updateLiveStats();
 }
 
 function checkAnswer(selected, correct, clickedBtn) {
@@ -299,7 +322,12 @@ function checkAnswer(selected, correct, clickedBtn) {
   }
   
   saveCurrentProgress();
-  updateCirclesUI();
+  renderCircles();
+  updateLiveStats();
+}
+
+function updateLiveStats() {
+  liveStatsEl.textContent = `✅ ${correctCount} | ❌ ${wrongCount}`;
 }
 
 document.getElementById('next-btn').onclick = () => {
@@ -320,29 +348,12 @@ document.getElementById('prev-btn').onclick = () => {
 // --- НАВИГАЦИЯ И СБРОС ---
 
 // Переход к вопросу
-document.getElementById('nav-jump-btn').onclick = () => {
-  jumpInput.value = currentIndex + 1;
-  jumpInput.max = currentQuestions.length;
-  jumpModal.classList.remove('hidden');
-  jumpInput.focus();
-};
-
-document.getElementById('jump-cancel-btn').onclick = () => {
-  jumpModal.classList.add('hidden');
-};
-
-document.getElementById('jump-confirm-btn').onclick = () => {
-  const val = parseInt(jumpInput.value);
-  if (val >= 1 && val <= currentQuestions.length) {
-    currentIndex = val - 1;
-    showQuestion();
-    jumpModal.classList.add('hidden');
-  } else {
-    alert(`Введите число от 1 до ${currentQuestions.length}`);
+document.getElementById('back-to-topics-header-btn').onclick = () => {
+  if (confirm('Вернуться к выбору тем? Прогресс сохранён.')) {
+    showTopicSelector();
   }
 };
 
-// Сброс пачки
 document.getElementById('reset-pack-btn').onclick = () => {
   if (confirm(`Сбросить прогресс в пачке ${currentPackInfo.start}-${currentPackInfo.end}?`)) {
     const storage = getStorage();

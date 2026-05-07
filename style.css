@@ -80,11 +80,56 @@ body {
   padding: 12px 24px; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;
 }
 
-/* Header with Circles */
+/* Header */
 header {
   padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
   gap: 10px; background: var(--card); border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 10; height: 60px;
+  position: sticky; top: 0; z-index: 10; height: 60px; overflow: hidden;
+}
+
+/* Wrapper for circles to handle scrolling */
+.circles-wrapper {
+  flex: 1;
+  overflow-x: auto;
+  display: flex;
+  justify-content: flex-start; /* Start from left */
+  padding: 0 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.circles-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+.progress-circles {
+  display: flex; gap: 8px; align-items: center;
+  min-width: max-content; /* Ensure container grows */
+}
+
+.circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: bold;
+  color: #fff;
+  transition: all 0.3s ease;
+  flex-shrink: 0; /* Prevent squishing */
+}
+.circle.future {
+  background: #334155; /* Dark blue/gray */
+}
+.circle.active {
+  background: var(--primary); /* Lighter blue/white */
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  border: 2px solid #fff;
+}
+.circle.correct {
+  background: var(--correct); /* Green */
+}
+.circle.wrong {
+  background: var(--wrong); /* Red */
+}
+
+.header-actions {
+  display: flex; align-items: center; gap: 10px;
 }
 .icon-btn {
   background: transparent; border: 1px solid var(--border); color: var(--text);
@@ -95,26 +140,7 @@ header {
 .icon-btn.danger { color: var(--wrong); border-color: var(--wrong); }
 .icon-btn:active { opacity: 0.7; }
 
-.progress-circles {
-  display: flex; gap: 6px; flex: 1; justify-content: center;
-}
-.circle {
-  width: 24px; height: 24px; border-radius: 50%;
-  background: #334155; /* Future/Dark */
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-.circle.active {
-  background: #fff; /* Current/Light */
-  transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(255,255,255,0.3);
-}
-.circle.correct {
-  background: var(--correct);
-}
-.circle.wrong {
-  background: var(--wrong);
-}
+.live-stats { font-size: 0.9rem; color: var(--text); white-space: nowrap; font-weight: 500; }
 
 /* Main Quiz Area */
 main#quiz-main { 
@@ -177,7 +203,7 @@ footer#quiz-footer {
 /* Mobile Responsive */
 @media (max-width: 360px) {
   header { gap: 6px; padding: 8px 10px; }
-  .circle { width: 20px; height: 20px; }
+  .circle { width: 32px; height: 32px; font-size: 1rem; }
   h2 { font-size: 1.1rem; }
   .opt-btn { padding: 14px 16px; font-size: 0.95rem; }
   .nav-btn { padding: 14px; font-size: 0.95rem; height: 48px; }
