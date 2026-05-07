@@ -88,12 +88,10 @@ function hideAllScreens() {
 function showTopicSelector() {
   const container = document.getElementById('topics-container');
   container.innerHTML = '';
-  
   TOPICS.forEach(topic => {
     const btn = document.createElement('button');
     btn.className = 'topic-btn';
     const total = allQuestions.filter(q => q.topic === topic).length;
-    
     const storage = getStorage();
     let totalAnswered = 0;
     for (let key in storage) {
@@ -101,7 +99,6 @@ function showTopicSelector() {
         totalAnswered += storage[key].states.filter(s => s && s.answered).length;
       }
     }
-    
     const progressText = totalAnswered > 0 ? ` | Решено: ${totalAnswered}/${total}` : '';
     btn.textContent = `${topic} (${total} вопр.${progressText})`;
     btn.onclick = () => showRangeSelector(topic);
@@ -139,17 +136,14 @@ function showRangeSelector(topic) {
     const end = Math.min(i + RANGE_SIZE, filtered.length);
     const btn = document.createElement('button');
     btn.className = 'range-btn';
-    
     const key = `${topic}_${start}_${end}`;
     const saved = storage[key];
     const answeredCount = saved?.states ? saved.states.filter(s => s?.answered).length : 0;
     const suffix = answeredCount > 0 ? ` (Решено: ${answeredCount}/${end - start})` : '';
-    
     btn.textContent = `Вопросы ${start}-${end}${suffix}`;
     btn.onclick = () => startQuiz(topic, start, end, filtered.slice(i, end), saved || {});
     container.appendChild(btn);
   }
-
   hideAllScreens();
   document.getElementById('range-select').classList.remove('hidden');
 }
@@ -169,17 +163,17 @@ function shuffleArray(array) {
 function startQuiz(topic, start, end, questionsChunk, savedData) {
   currentPackInfo = { topic, start, end };
   currentQuestions = questionsChunk;
-
+  
   if (savedData.states && Array.isArray(savedData.states)) {
     questionStates = currentQuestions.map((_, i) => savedData.states[i] || { answered: false, selected: -1 });
   } else {
     questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
   }
-
+  
   currentIndex = savedData.index ?? 0;
   correctCount = savedData.correct ?? 0;
   wrongCount = savedData.wrong ?? 0;
-
+  
   currentQuestions = currentQuestions.map(q => {
     let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
     opts = shuffleArray(opts);
@@ -199,20 +193,19 @@ function startQuiz(topic, start, end, questionsChunk, savedData) {
   showQuestion();
 }
 
+// --- ОТРИСОВКА КРУГОВ (ОБНОВЛЕНО) ---
 function renderCircles() {
   progressCirclesEl.innerHTML = '';
-  
   const total = currentQuestions.length;
-  // Показываем по 10 вопросов влево и вправо (всего около 20)
-  const windowSize = 10; 
-  let startIdx = Math.max(0, currentIndex - windowSize);
-  let endIdx = Math.min(total, currentIndex + windowSize + 1);
+  const startNum = currentPackInfo.start; // Начальный номер пачки (например, 201)
 
-  for (let i = startIdx; i < endIdx; i++) {
+  for (let i = 0; i < total; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle';
-    circle.textContent = i + 1;
     
+    // Пишем глобальный номер (startNum + индекс)
+    circle.textContent = startNum + i; 
+
     const state = questionStates[i];
     if (state && state.answered) {
       if (state.selected === currentQuestions[i].correct) {
@@ -228,16 +221,16 @@ function renderCircles() {
       circle.classList.add('active');
       circle.classList.remove('future');
     }
-    
+
     circle.onclick = () => {
-        currentIndex = i;
-        showQuestion();
+      currentIndex = i;
+      showQuestion();
     };
 
     progressCirclesEl.appendChild(circle);
   }
-  
-  // Плавная прокрутка к активному элементу по центру
+
+  // Скролл к активному кругу
   setTimeout(() => {
     const activeCircle = document.querySelector('.circle.active');
     if (activeCircle && circlesWrapper) {
@@ -250,10 +243,8 @@ function showQuestion() {
   const q = currentQuestions[currentIndex];
   document.getElementById('question').textContent = q.question;
   document.getElementById('feedback').textContent = '';
-
   const optionsEl = document.getElementById('options');
   optionsEl.innerHTML = '';
-
   q.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'opt-btn';
@@ -267,7 +258,6 @@ function showQuestion() {
     const btns = optionsEl.querySelectorAll('.opt-btn');
     btns.forEach(b => b.classList.add('disabled'));
     btns[q.correct].classList.add('correct');
-    
     if (state.selected !== q.correct) {
       btns[state.selected].classList.add('wrong');
       document.getElementById('feedback').textContent = '❌ Было неверно';
@@ -290,12 +280,9 @@ function showQuestion() {
 function checkAnswer(selected, correct, clickedBtn) {
   const state = questionStates[currentIndex];
   if (state && state.answered) return;
-  
   questionStates[currentIndex] = { answered: true, selected: selected };
-  
   const btns = document.querySelectorAll('.opt-btn');
   btns.forEach(b => b.classList.add('disabled'));
-  
   if (selected === correct) {
     clickedBtn.classList.add('correct');
     correctCount++;
@@ -308,7 +295,6 @@ function checkAnswer(selected, correct, clickedBtn) {
     document.getElementById('feedback').textContent = '❌ Неверно';
     document.getElementById('feedback').style.color = 'var(--wrong)';
   }
-  
   saveCurrentProgress();
   renderCircles();
   updateLiveStats();
@@ -333,21 +319,18 @@ document.getElementById('prev-btn').onclick = () => {
   if (currentIndex > 0) { currentIndex--; showQuestion(); }
 };
 
-// Кнопка возврата к темам
 document.getElementById('back-to-topics-header-btn').onclick = () => {
   if (confirm('Вернуться к выбору тем? Прогресс сохранён.')) {
     showTopicSelector();
   }
 };
 
-// Сброс пачки
 document.getElementById('reset-pack-btn').onclick = () => {
   if (confirm(`Сбросить прогресс в пачке ${currentPackInfo.start}-${currentPackInfo.end}?`)) {
     const storage = getStorage();
     const key = `${currentPackInfo.topic}_${currentPackInfo.start}_${currentPackInfo.end}`;
     delete storage[key];
     saveStorage(storage);
-    
     const filtered = allQuestions.filter(q => q.topic === currentPackInfo.topic);
     const chunk = filtered.slice(currentPackInfo.start - 1, currentPackInfo.end);
     startQuiz(currentPackInfo.topic, currentPackInfo.start, currentPackInfo.end, chunk, {});
@@ -363,5 +346,4 @@ function showResults() {
 }
 
 document.getElementById('back-to-topics-btn').onclick = showTopicSelector;
-
 window.addEventListener('DOMContentLoaded', () => pinInput.focus());

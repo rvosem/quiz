@@ -80,73 +80,67 @@ body {
   padding: 12px 24px; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;
 }
 
-/* Header */
+/* Header - ИСПРАВЛЕНО */
 header {
-  padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
-  gap: 8px; background: var(--card); border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 10; height: 56px; overflow: hidden;
+  padding: 8px 10px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  gap: 8px; 
+  background: var(--card); 
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10; 
+  height: 56px;
+  overflow: hidden; /* Чтобы скролл был внутри, а не растягивал шапку */
 }
 
 .header-btn {
   background: transparent; border: 1px solid var(--border); color: var(--text-muted);
   padding: 6px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
-  cursor: pointer; white-space: nowrap; touch-action: manipulation; flex-shrink: 0;
+  cursor: pointer; white-space: nowrap; touch-action: manipulation; 
+  flex-shrink: 0; /* Кнопка не сжимается */
 }
 .header-btn:active { opacity: 0.7; }
 
-/* Wrapper for circles to handle scrolling and centering */
+/* Обертка для кругов */
 .circles-wrapper {
-  flex: 1;
-  overflow-x: auto;
+  flex: 1; /* Занимает все свободное место */
+  overflow-x: auto; /* Горизонтальный скролл */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
   display: flex;
   align-items: center;
-  /* Скрываем скроллбар */
-  -ms-overflow-style: none;  
-  scrollbar-width: none;  
-  padding: 0 40%; /* Отступы, чтобы первый и последний элемент могли встать по центру */
-  scroll-padding: 0 40%;
 }
-.circles-wrapper::-webkit-scrollbar { display: none; }
+.circles-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
 .progress-circles {
   display: flex; gap: 6px; align-items: center;
-  width: max-content;
+  width: max-content; /* Чтобы круги не переносились */
+  padding: 0 5px; /* Небольшие отступы по бокам при скролле */
 }
 
 .circle {
-  width: 28px; height: 28px; 
-  min-width: 28px; min-height: 28px; /* Чтобы не сжимались */
+  width: 28px; height: 28px;
+  min-width: 28px; min-height: 28px; 
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem; 
+  font-size: 0.75rem; /* Чуть меньше шрифт, чтобы влезали цифры 300+ */
   font-weight: bold;
   color: #fff;
   transition: all 0.3s ease;
-  box-sizing: border-box; /* Важно для рамки */
+  box-sizing: border-box;
   border: 2px solid transparent;
 }
-
-.circle.future {
-  background: #334155;
-}
+.circle.future { background: #334155; }
 .circle.active {
-  background: #fff;
-  color: #000;
-  transform: scale(1.15);
-  border-color: #fff;
-  box-shadow: 0 0 10px rgba(255,255,255,0.4);
+  background: #fff; color: #000; transform: scale(1.15);
+  border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.4);
 }
-.circle.correct {
-  background: var(--correct);
-  border-color: var(--correct);
-}
-.circle.wrong {
-  background: var(--wrong);
-  border-color: var(--wrong);
-}
+.circle.correct { background: var(--correct); border-color: var(--correct); }
+.circle.wrong { background: var(--wrong); border-color: var(--wrong); }
 
 .header-actions {
-  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0; /* Счетчик не сжимается */
 }
 .icon-btn {
   background: transparent; border: 1px solid var(--border); color: var(--text);
@@ -160,9 +154,7 @@ header {
 .live-stats { font-size: 0.85rem; color: var(--text); white-space: nowrap; font-weight: 500; }
 
 /* Main Quiz Area */
-main#quiz-main { 
-  flex: 1; padding: 16px; padding-bottom: 90px; max-width: 640px; margin: 0 auto; width: 100%; 
-}
+main#quiz-main { flex: 1; padding: 16px; padding-bottom: 90px; max-width: 640px; margin: 0 auto; width: 100%; }
 .card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 h2 { font-size: 1.2rem; line-height: 1.45; margin-bottom: 18px; }
 .options { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
