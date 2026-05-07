@@ -196,16 +196,19 @@ function startQuiz(topic, start, end, questionsChunk, savedData) {
   showQuestion();
 }
 
+// --- ОТРИСОВКА КРУГОВ (ОБНОВЛЕНО) ---
 function renderCircles() {
   progressCirclesEl.innerHTML = '';
   const total = currentQuestions.length;
-  const windowSize = 10;
-  let startIdx = Math.max(0, currentIndex - windowSize);
-  let endIdx = Math.min(total, currentIndex + windowSize + 1);
-  for (let i = startIdx; i < endIdx; i++) {
+  const startNum = currentPackInfo.start; // Начальный номер пачки (например, 201)
+
+  for (let i = 0; i < total; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle';
-    circle.textContent = currentPackInfo.start + i;
+    
+    // Пишем глобальный номер (startNum + индекс)
+    circle.textContent = startNum + i; 
+
     const state = questionStates[i];
     if (state && state.answered) {
       if (state.selected === currentQuestions[i].correct) {
@@ -216,16 +219,21 @@ function renderCircles() {
     } else {
       circle.classList.add('future');
     }
+
     if (i === currentIndex) {
       circle.classList.add('active');
       circle.classList.remove('future');
     }
+
     circle.onclick = () => {
       currentIndex = i;
       showQuestion();
     };
+
     progressCirclesEl.appendChild(circle);
   }
+
+  // Скролл к активному кругу
   setTimeout(() => {
     const activeCircle = document.querySelector('.circle.active');
     if (activeCircle && circlesWrapper) {
