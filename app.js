@@ -1,7 +1,7 @@
 const CORRECT_PIN = "1234";
-const TOPICS = ["KOC", "KXC", "KTC", "test"];
+const TOPICS = ["KOC", "KXC", "KTC"];
 const RANGE_SIZE = 100;
-const STORAGE_KEY = 'exam_progress_v2';
+const STORAGE_KEY = 'exam_progress_v3'; // Обновил версию, чтобы сбросить старые данные
 
 let allQuestions = [];
 let currentQuestions = [];
@@ -11,43 +11,14 @@ let wrongCount = 0;
 let questionStates = [];
 let currentPackInfo = { topic: '', start: 0, end: 0 };
 
-// 🗄 Логика сохранения прогресса
-function getStorage() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-  catch { return {}; }
-}
-function saveStorage(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-  catch { console.warn('Не удалось сохранить прогресс'); }
-}
-
-function saveCurrentProgress() {
-  const storage = getStorage();
-  const key = `${currentPackInfo.topic}_${currentPackInfo.start}_${currentPackInfo.end}`;
-  storage[key] = {
-    index: currentIndex,
-    correct: correctCount,
-    wrong: wrongCount,
-    states: questionStates // Сохраняем полную карту ответов
-  };
-  saveStorage(storage);
-}
-
-// 🔀 Перемешивание массива (Fisher-Yates)
-function shuffleArray(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-// 📱 PIN Логика
+// Элементы UI
 const pinInput = document.getElementById('pin-input');
 const keypad = document.querySelector('.pin-keypad');
-const liveStatsEl = document.getElementById('live-stats');
+const progressCirclesEl = document.getElementById('progress-circles');
+const jumpModal = document.getElementById('jump-modal');
+const jumpInput = document.getElementById('jump-input');
 
+// --- PIN ЛОГИКА ---
 keypad.addEventListener('click', (e) => {
   if (e.target.classList.contains('key-btn')) {
     const num = e.target.dataset.num;
@@ -75,6 +46,29 @@ function checkPin() {
   }
 }
 
+// --- ХРАНЕНИЕ ---
+function getStorage() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveStorage(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch { console.warn('Не удалось сохранить прогресс'); }
+}
+
+function saveCurrentProgress() {
+  const storage = getStorage();
+  const key = `${currentPackInfo.topic}_${currentPackInfo.start}_${currentPackInfo.end}`;
+  storage[key] = {
+    index: currentIndex,
+    correct: correctCount,
+    wrong: wrongCount,
+    states: questionStates
+  };
+  saveStorage(storage);
+}
+
+// --- ЗАГРУЗКА И МЕНЮ ---
 async function loadQuestions() {
   try {
     const res = await fetch('questions.json');
@@ -100,7 +94,6 @@ function showTopicSelector() {
     btn.className = 'topic-btn';
     const total = allQuestions.filter(q => q.topic === topic).length;
     
-    // Подсчёт общего прогресса по теме
     const storage = getStorage();
     let totalAnswered = 0;
     for (let key in storage) {
@@ -115,7 +108,6 @@ function showTopicSelector() {
     container.appendChild(btn);
   });
 
-  // Кнопка сброса прогресса
   const resetBtn = document.createElement('button');
   resetBtn.className = 'topic-btn';
   resetBtn.style.marginTop = '20px';
@@ -164,11 +156,20 @@ function showRangeSelector(topic) {
 
 document.getElementById('back-to-topics-from-range').onclick = showTopicSelector;
 
+// --- ТЕСТ ---
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function startQuiz(topic, start, end, questionsChunk, savedData) {
   currentPackInfo = { topic, start, end };
   currentQuestions = questionsChunk;
 
-  // Восстановление или инициализация состояния
   if (savedData.states && Array.isArray(savedData.states)) {
     questionStates = currentQuestions.map((_, i) => savedData.states[i] || { answered: false, selected: -1 });
   } else {
@@ -179,7 +180,6 @@ function startQuiz(topic, start, end, questionsChunk, savedData) {
   correctCount = savedData.correct ?? 0;
   wrongCount = savedData.wrong ?? 0;
 
-  // Перемешиваем варианты ответов (сохраняем привязку к правильному)
   currentQuestions = currentQuestions.map(q => {
     let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
     opts = shuffleArray(opts);
@@ -190,19 +190,55 @@ function startQuiz(topic, start, end, questionsChunk, savedData) {
     };
   });
 
-  updateLiveStats();
   hideAllScreens();
   document.getElementById('quiz-header').classList.remove('hidden');
   document.getElementById('quiz-main').classList.remove('hidden');
   document.getElementById('quiz-footer').classList.remove('hidden');
   
+  renderCircles();
   showQuestion();
+}
+
+function renderCircles() {
+  progressCirclesEl.innerHTML = '';
+  // Показываем максимум 7 кружков вокруг текущего или просто первые 7, если вопросов мало
+  // Для простоты покажем фиксированные 7 слотов, соответствующих первым 7 вопросам пачки, 
+  // или динамически, если нужно. Но лучше сделать адаптивно.
+  // Сделаем так: показываем кружки для всех вопросов, но если их много, скроллим или показываем окно.
+  // По ТЗ: "7 кругов". Давайте сделаем 7 кругов, соответствующих вопросам 1-7 текущей пачки.
+  
+  const limit = Math.min(currentQuestions.length, 7);
+  for (let i = 0; i < limit; i++) {
+    const circle = document.createElement('div');
+    circle.className = 'circle';
+    circle.id = `circle-${i}`;
+    progressCirclesEl.appendChild(circle);
+  }
+  updateCirclesUI();
+}
+
+function updateCirclesUI() {
+  const circles = document.querySelectorAll('.circle');
+  circles.forEach((circle, i) => {
+    circle.classList.remove('active', 'correct', 'wrong');
+    if (i === currentIndex) {
+      circle.classList.add('active');
+    } else {
+      const state = questionStates[i];
+      if (state && state.answered) {
+        if (state.selected === currentQuestions[i].correct) {
+          circle.classList.add('correct');
+        } else {
+          circle.classList.add('wrong');
+        }
+      }
+    }
+  });
 }
 
 function showQuestion() {
   const q = currentQuestions[currentIndex];
   document.getElementById('question').textContent = q.question;
-  document.getElementById('counter').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
   document.getElementById('feedback').textContent = '';
 
   const optionsEl = document.getElementById('options');
@@ -216,9 +252,8 @@ function showQuestion() {
     optionsEl.appendChild(btn);
   });
 
-  // Восстановление UI для отвеченного вопроса
   const state = questionStates[currentIndex];
-  if (state.answered) {
+  if (state && state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
     btns.forEach(b => b.classList.add('disabled'));
     btns[q.correct].classList.add('correct');
@@ -237,14 +272,15 @@ function showQuestion() {
   const nextBtn = document.getElementById('next-btn');
   nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? 'Завершить' : 'Далее →';
   nextBtn.disabled = false;
+
+  updateCirclesUI();
 }
 
 function checkAnswer(selected, correct, clickedBtn) {
   const state = questionStates[currentIndex];
-  if (state.answered) return;
+  if (state && state.answered) return;
   
-  state.answered = true;
-  state.selected = selected;
+  questionStates[currentIndex] = { answered: true, selected: selected };
   
   const btns = document.querySelectorAll('.opt-btn');
   btns.forEach(b => b.classList.add('disabled'));
@@ -262,12 +298,8 @@ function checkAnswer(selected, correct, clickedBtn) {
     document.getElementById('feedback').style.color = 'var(--wrong)';
   }
   
-  updateLiveStats();
-  saveCurrentProgress(); // 💾 Мгновенное сохранение при ответе
-}
-
-function updateLiveStats() {
-  liveStatsEl.textContent = `✅ ${correctCount} | ❌ ${wrongCount}`;
+  saveCurrentProgress();
+  updateCirclesUI();
 }
 
 document.getElementById('next-btn').onclick = () => {
@@ -285,9 +317,43 @@ document.getElementById('prev-btn').onclick = () => {
   if (currentIndex > 0) { currentIndex--; showQuestion(); }
 };
 
-document.getElementById('back-to-topics-header-btn').onclick = () => {
-  if (confirm('Вернуться к выбору тем? Прогресс сохранён.')) {
-    showTopicSelector();
+// --- НАВИГАЦИЯ И СБРОС ---
+
+// Переход к вопросу
+document.getElementById('nav-jump-btn').onclick = () => {
+  jumpInput.value = currentIndex + 1;
+  jumpInput.max = currentQuestions.length;
+  jumpModal.classList.remove('hidden');
+  jumpInput.focus();
+};
+
+document.getElementById('jump-cancel-btn').onclick = () => {
+  jumpModal.classList.add('hidden');
+};
+
+document.getElementById('jump-confirm-btn').onclick = () => {
+  const val = parseInt(jumpInput.value);
+  if (val >= 1 && val <= currentQuestions.length) {
+    currentIndex = val - 1;
+    showQuestion();
+    jumpModal.classList.add('hidden');
+  } else {
+    alert(`Введите число от 1 до ${currentQuestions.length}`);
+  }
+};
+
+// Сброс пачки
+document.getElementById('reset-pack-btn').onclick = () => {
+  if (confirm(`Сбросить прогресс в пачке ${currentPackInfo.start}-${currentPackInfo.end}?`)) {
+    const storage = getStorage();
+    const key = `${currentPackInfo.topic}_${currentPackInfo.start}_${currentPackInfo.end}`;
+    delete storage[key];
+    saveStorage(storage);
+    
+    // Перезагружаем текущую пачку с нуля
+    const filtered = allQuestions.filter(q => q.topic === currentPackInfo.topic);
+    const chunk = filtered.slice(currentPackInfo.start - 1, currentPackInfo.end);
+    startQuiz(currentPackInfo.topic, currentPackInfo.start, currentPackInfo.end, chunk, {});
   }
 };
 

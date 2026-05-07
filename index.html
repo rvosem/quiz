@@ -44,9 +44,13 @@
 
   <!-- Интерфейс теста -->
   <header id="quiz-header" class="hidden">
-    <button id="back-to-topics-header-btn" class="header-btn">← Темы</button>
-    <span id="counter">1 / 10</span>
-    <span id="live-stats" class="live-stats">✅ 0 | ❌ 0</span>
+    <button id="nav-jump-btn" class="icon-btn" title="Перейти к вопросу">🔢</button>
+    
+    <div id="progress-circles" class="progress-circles">
+      <!-- Кружки генерируются JS -->
+    </div>
+
+    <button id="reset-pack-btn" class="icon-btn danger" title="Сбросить эту пачку">🗑️</button>
   </header>
   
   <main id="quiz-main" class="hidden">
@@ -73,6 +77,18 @@
     </div>
     <button id="back-to-topics-btn" class="nav-btn topics-btn">К выбору тем</button>
   </main>
+
+  <!-- Модальное окно перехода -->
+  <div id="jump-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Перейти к вопросу</h3>
+      <input type="number" id="jump-input" placeholder="Номер (1-100)" min="1">
+      <div class="modal-actions">
+        <button id="jump-cancel-btn" class="modal-btn secondary">Отмена</button>
+        <button id="jump-confirm-btn" class="modal-btn primary">Перейти</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
