@@ -46,7 +46,7 @@
   <header id="quiz-header" class="hidden">
     <button id="back-to-topics-header-btn" class="header-btn">← Темы</button>
     
-    <!-- Контейнер для кружков с прокруткой -->
+    <!-- Контейнер для кружков -->
     <div id="circles-wrapper" class="circles-wrapper">
       <div id="progress-circles" class="progress-circles">
         <!-- Кружки генерируются JS -->
@@ -83,18 +83,6 @@
     </div>
     <button id="back-to-topics-btn" class="nav-btn topics-btn">К выбору тем</button>
   </main>
-
-  <!-- Модальное окно перехода -->
-  <div id="jump-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Перейти к вопросу</h3>
-      <input type="number" id="jump-input" placeholder="Номер (1-100)" min="1">
-      <div class="modal-actions">
-        <button id="jump-cancel-btn" class="modal-btn secondary">Отмена</button>
-        <button id="jump-confirm-btn" class="modal-btn primary">Перейти</button>
-      </div>
-    </div>
-  </div>
 
   <script src="app.js"></script>
 </body>

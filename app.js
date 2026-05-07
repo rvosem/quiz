@@ -1,5 +1,5 @@
 const CORRECT_PIN = "1234";
-const TOPICS = ["KOC", "KXC", "KTC"];
+const TOPICS = ["KOC", "KXC", "KTC", "test"];
 const RANGE_SIZE = 100;
 const STORAGE_KEY = 'exam_progress_v3';
 
@@ -15,8 +15,6 @@ let currentPackInfo = { topic: '', start: 0, end: 0 };
 const pinInput = document.getElementById('pin-input');
 const keypad = document.querySelector('.pin-keypad');
 const liveStatsEl = document.getElementById('live-stats');
-const jumpModal = document.getElementById('jump-modal');
-const jumpInput = document.getElementById('jump-input');
 const circlesWrapper = document.getElementById('circles-wrapper');
 const progressCirclesEl = document.getElementById('progress-circles');
 
@@ -96,7 +94,6 @@ function showTopicSelector() {
     btn.className = 'topic-btn';
     const total = allQuestions.filter(q => q.topic === topic).length;
     
-    // Подсчёт общего прогресса по теме
     const storage = getStorage();
     let totalAnswered = 0;
     for (let key in storage) {
@@ -205,24 +202,17 @@ function startQuiz(topic, start, end, questionsChunk, savedData) {
 function renderCircles() {
   progressCirclesEl.innerHTML = '';
   
-  // Генерируем кружки для всех вопросов (виртуально), но отрисовываем с учетом прокрутки
-  // Для производительности и простоты отрисовки "скользящего окна" мы будем перерисовывать
-  // только видимую часть или все, но управлять позицией скролла.
-  // Проще всего создать все кружки, но скрыть лишние, либо перерисовывать.
-  // Сделаем перерисовку "окна" вокруг currentIndex для легковесности.
-  
   const total = currentQuestions.length;
-  // Показываем от (currentIndex - 3) до (currentIndex + 3), с границами массива
-  let startIdx = Math.max(0, currentIndex - 3);
-  let endIdx = Math.min(total, currentIndex + 4); // +4 так как slice не включает конец
+  // Показываем по 10 вопросов влево и вправо (всего около 20)
+  const windowSize = 10; 
+  let startIdx = Math.max(0, currentIndex - windowSize);
+  let endIdx = Math.min(total, currentIndex + windowSize + 1);
 
   for (let i = startIdx; i < endIdx; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle';
-    circle.id = `circle-${i}`;
-    circle.textContent = i + 1; // Номер вопроса
+    circle.textContent = i + 1;
     
-    // Определяем статус
     const state = questionStates[i];
     if (state && state.answered) {
       if (state.selected === currentQuestions[i].correct) {
@@ -236,7 +226,6 @@ function renderCircles() {
 
     if (i === currentIndex) {
       circle.classList.add('active');
-      // Убираем класс future, если он был добавлен
       circle.classList.remove('future');
     }
     
@@ -248,7 +237,7 @@ function renderCircles() {
     progressCirclesEl.appendChild(circle);
   }
   
-  // Прокручиваем к активному элементу
+  // Плавная прокрутка к активному элементу по центру
   setTimeout(() => {
     const activeCircle = document.querySelector('.circle.active');
     if (activeCircle && circlesWrapper) {
@@ -273,7 +262,6 @@ function showQuestion() {
     optionsEl.appendChild(btn);
   });
 
-  // Восстановление UI для отвеченного вопроса
   const state = questionStates[currentIndex];
   if (state && state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
@@ -295,7 +283,7 @@ function showQuestion() {
   nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? 'Завершить' : 'Далее →';
   nextBtn.disabled = false;
 
-  renderCircles(); // Перерисовываем кружки
+  renderCircles();
   updateLiveStats();
 }
 
@@ -345,15 +333,14 @@ document.getElementById('prev-btn').onclick = () => {
   if (currentIndex > 0) { currentIndex--; showQuestion(); }
 };
 
-// --- НАВИГАЦИЯ И СБРОС ---
-
-// Переход к вопросу
+// Кнопка возврата к темам
 document.getElementById('back-to-topics-header-btn').onclick = () => {
   if (confirm('Вернуться к выбору тем? Прогресс сохранён.')) {
     showTopicSelector();
   }
 };
 
+// Сброс пачки
 document.getElementById('reset-pack-btn').onclick = () => {
   if (confirm(`Сбросить прогресс в пачке ${currentPackInfo.start}-${currentPackInfo.end}?`)) {
     const storage = getStorage();
@@ -361,7 +348,6 @@ document.getElementById('reset-pack-btn').onclick = () => {
     delete storage[key];
     saveStorage(storage);
     
-    // Перезагружаем текущую пачку с нуля
     const filtered = allQuestions.filter(q => q.topic === currentPackInfo.topic);
     const chunk = filtered.slice(currentPackInfo.start - 1, currentPackInfo.end);
     startQuiz(currentPackInfo.topic, currentPackInfo.start, currentPackInfo.end, chunk, {});
