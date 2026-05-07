@@ -1,5 +1,5 @@
-const CORRECT_PIN = "1234";
-const TOPICS = ["KOC", "KXC", "KTC"];
+const CORRECT_PIN = "1111";
+const TOPICS = ["KOC", "KXC", "KTC", "test"];
 
 let allQuestions = [];
 let currentQuestions = [];
@@ -8,7 +8,10 @@ let correctCount = 0;
 let wrongCount = 0;
 let questionStates = [];
 
-// 🔀 Перемешивание массива (Fisher-Yates)
+// Элементы
+const liveStatsEl = document.getElementById('live-stats');
+const backToTopicsHeaderBtn = document.getElementById('back-to-topics-header-btn');
+
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -18,14 +21,16 @@ function shuffleArray(array) {
   return arr;
 }
 
+function updateLiveStats() {
+  liveStatsEl.textContent = `✅ ${correctCount} | ❌ ${wrongCount}`;
+}
+
 // PIN Логика
 const pinInput = document.getElementById('pin-input');
 const pinBtn = document.getElementById('pin-btn');
 const pinError = document.getElementById('pin-error');
 
-pinInput.addEventListener('input', () => {
-  if (pinInput.value.length === 4) checkPin();
-});
+pinInput.addEventListener('input', () => { if (pinInput.value.length === 4) checkPin(); });
 pinBtn.addEventListener('click', checkPin);
 
 function checkPin() {
@@ -74,32 +79,25 @@ function startQuiz(topic) {
   let filtered = allQuestions.filter(q => q.topic === topic);
   if (filtered.length === 0) { alert('Нет вопросов для этой темы'); return; }
 
-  // 🔀 Перемешиваем сами вопросы
   currentQuestions = shuffleArray(filtered);
-
-  // 🔀 Перемешиваем варианты ответов внутри каждого вопроса
   currentQuestions = currentQuestions.map(q => {
-    // Создаём массив объектов с флагом правильности
     let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
-    opts = shuffleArray(opts); // Перемешиваем варианты
-    const newCorrect = opts.findIndex(o => o.isCorrect); // Находим новый индекс правильного
-    return {
-      question: q.question,
-      options: opts.map(o => o.text),
-      correct: newCorrect
-    };
+    opts = shuffleArray(opts);
+    const newCorrect = opts.findIndex(o => o.isCorrect);
+    return { question: q.question, options: opts.map(o => o.text), correct: newCorrect };
   });
 
   correctCount = 0;
   wrongCount = 0;
   questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
   currentIndex = 0;
-
+  
+  updateLiveStats(); // Обновляем счётчик при старте
   hideAllScreens();
   document.getElementById('quiz-header').classList.remove('hidden');
   document.getElementById('quiz-main').classList.remove('hidden');
   document.getElementById('quiz-footer').classList.remove('hidden');
-
+  
   showQuestion();
 }
 
@@ -115,18 +113,16 @@ function showQuestion() {
   q.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'opt-btn';
-    btn.textContent = opt; // ✅ Без букв, только текст ответа
+    btn.textContent = opt;
     btn.onclick = () => checkAnswer(i, q.correct, btn);
     optionsEl.appendChild(btn);
   });
 
-  // Восстанавливаем состояние, если вопрос уже отвечен
   const state = questionStates[currentIndex];
   if (state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
     btns.forEach(b => b.classList.add('disabled'));
     btns[q.correct].classList.add('correct');
-
     if (state.selected !== q.correct) {
       btns[state.selected].classList.add('wrong');
       document.getElementById('feedback').textContent = '❌ Было неверно';
@@ -146,13 +142,13 @@ function showQuestion() {
 function checkAnswer(selected, correct, clickedBtn) {
   const state = questionStates[currentIndex];
   if (state.answered) return;
-
+  
   state.answered = true;
   state.selected = selected;
-
+  
   const btns = document.querySelectorAll('.opt-btn');
   btns.forEach(b => b.classList.add('disabled'));
-
+  
   if (selected === correct) {
     clickedBtn.classList.add('correct');
     correctCount++;
@@ -165,6 +161,7 @@ function checkAnswer(selected, correct, clickedBtn) {
     document.getElementById('feedback').textContent = '❌ Неверно';
     document.getElementById('feedback').style.color = 'var(--wrong)';
   }
+  updateLiveStats(); // Обновляем счётчик сразу после ответа
 }
 
 document.getElementById('next-btn').onclick = () => {
@@ -180,6 +177,16 @@ document.getElementById('prev-btn').onclick = () => {
   if (currentIndex > 0) { currentIndex--; showQuestion(); }
 };
 
+// Кнопка возврата из шапки
+backToTopicsHeaderBtn.onclick = () => {
+  if (confirm('Вернуться к выбору тем? Прогресс текущего теста будет сброшен.')) {
+    correctCount = 0; 
+    wrongCount = 0;
+    updateLiveStats();
+    showTopicSelector();
+  }
+};
+
 function showResults() {
   hideAllScreens();
   document.getElementById('results-screen').classList.remove('hidden');
@@ -191,6 +198,7 @@ function showResults() {
 document.getElementById('back-to-topics-btn').onclick = () => {
   correctCount = 0; 
   wrongCount = 0;
+  updateLiveStats();
   showTopicSelector();
 };
 
