@@ -11,7 +11,7 @@
   <!-- Экран PIN -->
   <div id="pin-overlay">
     <h1>Введите PIN</h1>
-    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••" readonly autocomplete="off">
+    <input type="tel" inputmode="numeric" maxlength="4" id="pin-input" placeholder="••••" autocomplete="off">
     <div class="pin-keypad">
       <button class="key-btn" data-num="1">1</button>
       <button class="key-btn" data-num="2">2</button>
@@ -22,9 +22,7 @@
       <button class="key-btn" data-num="7">7</button>
       <button class="key-btn" data-num="8">8</button>
       <button class="key-btn" data-num="9">9</button>
-      <button class="key-btn empty" data-num="0">
-        <span>0</span>
-      </button>
+      <button class="key-btn empty" data-num="0"><span>0</span></button>
       <button class="key-btn backspace" data-num="back">⌫</button>
     </div>
     <p id="pin-error"></p>
@@ -34,6 +32,14 @@
   <main id="topic-select" class="hidden" style="text-align: center; padding-top: 40px;">
     <h1>Выберите тему</h1>
     <div id="topics-container"></div>
+  </main>
+
+  <!-- Выбор диапазона (Пачки вопросов) -->
+  <main id="range-select" class="hidden" style="text-align: center; padding-top: 40px;">
+    <h1 id="range-title">Тема</h1>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">Выберите пачку вопросов</p>
+    <div id="ranges-container"></div>
+    <button id="back-to-topics-from-range" class="header-btn" style="margin-top: 20px;">← Назад к темам</button>
   </main>
 
   <!-- Интерфейс теста -->
