@@ -1,5 +1,5 @@
-const CORRECT_PIN = "1234"; // ← ИЗМЕНИТЕ НА СВОЙ
-const TOPICS = ["KOC", "KXC", "KTC"]; // ← ДОЛЖНЫ СОВПАДАТЬ С JSON
+const CORRECT_PIN = "1234";
+const TOPICS = ["KOC", "KXC", "KTC"];
 
 let allQuestions = [];
 let currentQuestions = [];
@@ -10,7 +10,7 @@ let questionStates = [];
 
 // 🔀 Перемешивание массива (Fisher-Yates)
 function shuffleArray(array) {
-  const arr = [...array]; // Копия, чтобы не ломать исходный allQuestions
+  const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -71,20 +71,35 @@ function showTopicSelector() {
 }
 
 function startQuiz(topic) {
-  // 🔀 Фильтруем по теме и сразу перемешиваем
-  currentQuestions = shuffleArray(allQuestions.filter(q => q.topic === topic));
-  if (currentQuestions.length === 0) { alert('Нет вопросов для этой темы'); return; }
-  
+  let filtered = allQuestions.filter(q => q.topic === topic);
+  if (filtered.length === 0) { alert('Нет вопросов для этой темы'); return; }
+
+  // 🔀 Перемешиваем сами вопросы
+  currentQuestions = shuffleArray(filtered);
+
+  // 🔀 Перемешиваем варианты ответов внутри каждого вопроса
+  currentQuestions = currentQuestions.map(q => {
+    // Создаём массив объектов с флагом правильности
+    let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+    opts = shuffleArray(opts); // Перемешиваем варианты
+    const newCorrect = opts.findIndex(o => o.isCorrect); // Находим новый индекс правильного
+    return {
+      question: q.question,
+      options: opts.map(o => o.text),
+      correct: newCorrect
+    };
+  });
+
   correctCount = 0;
   wrongCount = 0;
   questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
   currentIndex = 0;
-  
+
   hideAllScreens();
   document.getElementById('quiz-header').classList.remove('hidden');
   document.getElementById('quiz-main').classList.remove('hidden');
   document.getElementById('quiz-footer').classList.remove('hidden');
-  
+
   showQuestion();
 }
 
@@ -93,14 +108,14 @@ function showQuestion() {
   document.getElementById('question').textContent = q.question;
   document.getElementById('counter').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
   document.getElementById('feedback').textContent = '';
-  
+
   const optionsEl = document.getElementById('options');
   optionsEl.innerHTML = '';
-  
+
   q.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'opt-btn';
-    btn.textContent = `${String.fromCharCode(65 + i)}) ${opt}`;
+    btn.textContent = opt; // ✅ Без букв, только текст ответа
     btn.onclick = () => checkAnswer(i, q.correct, btn);
     optionsEl.appendChild(btn);
   });
@@ -111,7 +126,7 @@ function showQuestion() {
     const btns = optionsEl.querySelectorAll('.opt-btn');
     btns.forEach(b => b.classList.add('disabled'));
     btns[q.correct].classList.add('correct');
-    
+
     if (state.selected !== q.correct) {
       btns[state.selected].classList.add('wrong');
       document.getElementById('feedback').textContent = '❌ Было неверно';
@@ -131,13 +146,13 @@ function showQuestion() {
 function checkAnswer(selected, correct, clickedBtn) {
   const state = questionStates[currentIndex];
   if (state.answered) return;
-  
+
   state.answered = true;
   state.selected = selected;
-  
+
   const btns = document.querySelectorAll('.opt-btn');
   btns.forEach(b => b.classList.add('disabled'));
-  
+
   if (selected === correct) {
     clickedBtn.classList.add('correct');
     correctCount++;
