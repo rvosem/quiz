@@ -44,6 +44,18 @@ body {
 #pin-btn:active { opacity: 0.8; }
 #pin-error { color: var(--wrong); min-height: 20px; font-size: 0.9rem; }
 
+/* PIN Keypad */
+.pin-keypad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 280px; margin-top: 20px;
+}
+.key-btn {
+  padding: 16px; border: none; border-radius: 12px; background: var(--card); color: var(--text);
+  font-size: 1.5rem; font-weight: 600; cursor: pointer; touch-action: manipulation;
+}
+.key-btn:active { background: #334155; }
+.key-btn.empty { visibility: hidden; }
+.key-btn.backspace { background: #334155; font-size: 1.2rem; }
+
 /* Topic Selection */
 #topic-select { padding: 20px 16px; flex: 1; display: flex; flex-direction: column; align-items: center; }
 #topics-container { width: 100%; max-width: 400px; margin-top: 20px; }
@@ -53,6 +65,20 @@ body {
   font-size: 1rem; font-weight: 500; text-align: left; cursor: pointer; touch-action: manipulation;
 }
 .topic-btn:active { opacity: 0.8; }
+
+/* Range Selection */
+#range-select { padding: 20px 16px; flex: 1; display: flex; flex-direction: column; align-items: center; }
+#ranges-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+.range-btn {
+  width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font-size: 1rem; font-weight: 500;
+  cursor: pointer; touch-action: manipulation;
+}
+.range-btn:active { background: #334155; }
+#back-to-topics-from-range {
+  background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+  padding: 12px 24px; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;
+}
 
 /* Header */
 header {
@@ -71,12 +97,7 @@ header {
 
 /* Main Quiz Area */
 main#quiz-main { 
-  flex: 1; 
-  padding: 16px; 
-  padding-bottom: 90px; /* Отступ под фиксированный футер */
-  max-width: 640px; 
-  margin: 0 auto; 
-  width: 100%; 
+  flex: 1; padding: 16px; padding-bottom: 90px; max-width: 640px; margin: 0 auto; width: 100%; 
 }
 .card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 h2 { font-size: 1.2rem; line-height: 1.45; margin-bottom: 18px; }
@@ -84,7 +105,7 @@ h2 { font-size: 1.2rem; line-height: 1.45; margin-bottom: 18px; }
 .opt-btn {
   width: 100%; padding: 16px 18px; border: 2px solid var(--border); border-radius: var(--radius);
   background: var(--card); color: var(--text); font-size: 1rem; text-align: left;
-  cursor: pointer; touch-action: manipulation; transition: all 0.2s;
+  cursor: pointer; touch-action: manipulation;
 }
 .opt-btn.correct { border-color: var(--correct); background: #064e3b; color: #bbf7d0; }
 .opt-btn.wrong { border-color: var(--wrong); background: #450a0a; color: #fecaca; }
@@ -93,54 +114,22 @@ h2 { font-size: 1.2rem; line-height: 1.45; margin-bottom: 18px; }
 
 /* Footer Navigation (Fixed Bottom) */
 footer#quiz-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom)); /* Для iPhone с полоской */
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  display: flex; 
-  gap: 10px;
-  z-index: 20;
+  position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom)); background: var(--bg);
+  border-top: 1px solid var(--border); display: flex; gap: 10px; z-index: 20;
 }
 .nav-btn {
-  flex: 1; 
-  padding: 16px; 
-  border: none; 
-  border-radius: var(--radius); 
-  background: var(--primary);
-  color: #fff; 
-  font-size: 1rem; 
-  font-weight: 500; 
-  cursor: pointer; 
-  touch-action: manipulation;
-  height: 52px; /* Фиксированная высота для кнопок навигации */
+  flex: 1; padding: 16px; border: none; border-radius: var(--radius); background: var(--primary);
+  color: #fff; font-size: 1rem; font-weight: 500; cursor: pointer; touch-action: manipulation; height: 52px;
 }
 .nav-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
 .nav-btn:active:not(:disabled) { background: var(--primary-hover); }
 
 /* Results Screen */
-#results-screen { 
-  padding: 20px 16px; 
-  flex: 1; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center;
-  justify-content: flex-start; 
-}
+#results-screen { padding: 20px 16px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
 .results-stats { margin: 24px 0; font-size: 1.2rem; line-height: 2; width: 100%; max-width: 300px; }
 .results-stats p { margin-bottom: 8px; }
-
-/* Кнопка на экране результатов - компактная */
-.topics-btn {
-  width: 100%;
-  max-width: 300px;
-  margin-top: 20px;
-  /* Сброс flex-grow, чтобы не растягивалась */
-  flex-grow: 0; 
-}
+.topics-btn { width: 100%; max-width: 300px; margin-top: 20px; flex-grow: 0; }
 
 /* Mobile Responsive */
 @media (max-width: 360px) {
@@ -149,40 +138,4 @@ footer#quiz-footer {
   h2 { font-size: 1.1rem; }
   .opt-btn { padding: 14px 16px; font-size: 0.95rem; }
   .nav-btn { padding: 14px; font-size: 0.95rem; height: 48px; }
-}
-
-/* Стили для цифровой панели PIN */
-.pin-keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  width: 100%;
-  max-width: 280px;
-  margin-top: 20px;
-}
-.key-btn {
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background: var(--card);
-  color: var(--text);
-  font-size: 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: background 0.2s;
-}
-.key-btn:active {
-  background: #334155;
-}
-.key-btn.empty {
-  visibility: hidden; /* Пустая ячейка для выравнивания 0 по центру */
-}
-.key-btn.backspace {
-  background: #334155;
-  font-size: 1.2rem;
-}
-.key-btn span {
-  display: block;
-  width: 100%;
 }

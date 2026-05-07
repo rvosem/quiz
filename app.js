@@ -1,46 +1,30 @@
-const CORRECT_PIN = "1234"; 
+const CORRECT_PIN = "1234";
 const TOPICS = ["KOC", "KXC", "KTC", "test"];
+const RANGE_SIZE = 100; // Размер пачки вопросов
 
 let allQuestions = [];
-let currentQuestions = [];
+let currentQuestions = []; // Вопросы текущей пачки
 let currentIndex = 0;
 let correctCount = 0;
 let wrongCount = 0;
 let questionStates = [];
 
-// Элементы
-const liveStatsEl = document.getElementById('live-stats');
-const backToTopicsHeaderBtn = document.getElementById('back-to-topics-header-btn');
-
-function shuffleArray(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function updateLiveStats() {
-  liveStatsEl.textContent = `✅ ${correctCount} | ❌ ${wrongCount}`;
-}
-
-// PIN Логика
+// Элементы UI
 const pinInput = document.getElementById('pin-input');
-const pinError = document.getElementById('pin-error');
 const keypad = document.querySelector('.pin-keypad');
+const liveStatsEl = document.getElementById('live-stats');
 
+// --- PIN ЛОГИКА ---
 keypad.addEventListener('click', (e) => {
   if (e.target.classList.contains('key-btn')) {
     const num = e.target.dataset.num;
-    
     if (num === 'back') {
       pinInput.value = pinInput.value.slice(0, -1);
-      pinError.textContent = '';
+      document.getElementById('pin-error').textContent = '';
     } else {
       if (pinInput.value.length < 4) {
         pinInput.value += num;
-        pinError.textContent = '';
+        document.getElementById('pin-error').textContent = '';
         if (pinInput.value.length === 4) checkPin();
       }
     }
@@ -52,13 +36,13 @@ function checkPin() {
     document.getElementById('pin-overlay').style.display = 'none';
     loadQuestions();
   } else {
-    pinError.textContent = 'Неверный PIN';
+    document.getElementById('pin-error').textContent = 'Неверный PIN';
     pinInput.value = '';
-    // Легкая вибрация на телефоне для обозначения ошибки
     if (navigator.vibrate) navigator.vibrate(200);
   }
 }
 
+// --- ЗАГРУЗКА И МЕНЮ ---
 async function loadQuestions() {
   try {
     const res = await fetch('questions.json');
@@ -66,12 +50,12 @@ async function loadQuestions() {
     allQuestions = await res.json();
     showTopicSelector();
   } catch (err) {
-    pinError.textContent = '❌ Ошибка загрузки questions.json';
+    document.getElementById('pin-error').textContent = '❌ Ошибка загрузки JSON';
   }
 }
 
 function hideAllScreens() {
-  ['topic-select', 'quiz-header', 'quiz-main', 'quiz-footer', 'results-screen']
+  ['topic-select', 'range-select', 'quiz-header', 'quiz-main', 'quiz-footer', 'results-screen']
     .forEach(id => document.getElementById(id).classList.add('hidden'));
 }
 
@@ -83,36 +67,70 @@ function showTopicSelector() {
     btn.className = 'topic-btn';
     const count = allQuestions.filter(q => q.topic === topic).length;
     btn.textContent = `${topic} (${count} вопр.)`;
-    btn.onclick = () => startQuiz(topic);
+    btn.onclick = () => showRangeSelector(topic);
     container.appendChild(btn);
   });
   hideAllScreens();
   document.getElementById('topic-select').classList.remove('hidden');
 }
 
-function startQuiz(topic) {
-  let filtered = allQuestions.filter(q => q.topic === topic);
-  if (filtered.length === 0) { alert('Нет вопросов для этой темы'); return; }
+function showRangeSelector(topic) {
+  const filtered = allQuestions.filter(q => q.topic === topic);
+  const container = document.getElementById('ranges-container');
+  document.getElementById('range-title').textContent = topic;
+  container.innerHTML = '';
 
-  currentQuestions = shuffleArray(filtered);
+  // Создаем кнопки диапазонов
+  for (let i = 0; i < filtered.length; i += RANGE_SIZE) {
+    const end = Math.min(i + RANGE_SIZE, filtered.length);
+    const btn = document.createElement('button');
+    btn.className = 'range-btn';
+    btn.textContent = `Вопросы ${i + 1} - ${end}`;
+    btn.onclick = () => startQuiz(filtered.slice(i, end)); // Передаем срез вопросов
+    container.appendChild(btn);
+  }
+
+  hideAllScreens();
+  document.getElementById('range-select').classList.remove('hidden');
+}
+
+document.getElementById('back-to-topics-from-range').onclick = showTopicSelector;
+
+// --- ТЕСТ ---
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startQuiz(questionsChunk) {
+  currentQuestions = questionsChunk;
+  
+  // Перемешиваем ВАРИАНТЫ ОТВЕТОВ внутри каждого вопроса
   currentQuestions = currentQuestions.map(q => {
     let opts = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
     opts = shuffleArray(opts);
-    const newCorrect = opts.findIndex(o => o.isCorrect);
-    return { question: q.question, options: opts.map(o => o.text), correct: newCorrect };
+    return {
+      question: q.question,
+      options: opts.map(o => o.text),
+      correct: opts.findIndex(o => o.isCorrect)
+    };
   });
 
+  // Сброс статистики
   correctCount = 0;
   wrongCount = 0;
   questionStates = new Array(currentQuestions.length).fill(null).map(() => ({ answered: false, selected: -1 }));
   currentIndex = 0;
   
-  updateLiveStats(); // Обновляем счётчик при старте
+  updateLiveStats();
   hideAllScreens();
   document.getElementById('quiz-header').classList.remove('hidden');
   document.getElementById('quiz-main').classList.remove('hidden');
   document.getElementById('quiz-footer').classList.remove('hidden');
-  
   showQuestion();
 }
 
@@ -128,11 +146,12 @@ function showQuestion() {
   q.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'opt-btn';
-    btn.textContent = opt;
+    btn.textContent = opt; // Просто текст, без букв
     btn.onclick = () => checkAnswer(i, q.correct, btn);
     optionsEl.appendChild(btn);
   });
 
+  // Восстановление состояния (если нажали Назад)
   const state = questionStates[currentIndex];
   if (state.answered) {
     const btns = optionsEl.querySelectorAll('.opt-btn');
@@ -176,7 +195,11 @@ function checkAnswer(selected, correct, clickedBtn) {
     document.getElementById('feedback').textContent = '❌ Неверно';
     document.getElementById('feedback').style.color = 'var(--wrong)';
   }
-  updateLiveStats(); // Обновляем счётчик сразу после ответа
+  updateLiveStats();
+}
+
+function updateLiveStats() {
+  liveStatsEl.textContent = `✅ ${correctCount} | ❌ ${wrongCount}`;
 }
 
 document.getElementById('next-btn').onclick = () => {
@@ -192,12 +215,8 @@ document.getElementById('prev-btn').onclick = () => {
   if (currentIndex > 0) { currentIndex--; showQuestion(); }
 };
 
-// Кнопка возврата из шапки
-backToTopicsHeaderBtn.onclick = () => {
-  if (confirm('Вернуться к выбору тем? Прогресс текущего теста будет сброшен.')) {
-    correctCount = 0; 
-    wrongCount = 0;
-    updateLiveStats();
+document.getElementById('back-to-topics-header-btn').onclick = () => {
+  if (confirm('Вернуться к выбору тем? Прогресс будет сброшен.')) {
     showTopicSelector();
   }
 };
@@ -210,11 +229,6 @@ function showResults() {
   document.getElementById('res-total').textContent = currentQuestions.length;
 }
 
-document.getElementById('back-to-topics-btn').onclick = () => {
-  correctCount = 0; 
-  wrongCount = 0;
-  updateLiveStats();
-  showTopicSelector();
-};
+document.getElementById('back-to-topics-btn').onclick = showTopicSelector;
 
 window.addEventListener('DOMContentLoaded', () => pinInput.focus());
