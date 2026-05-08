@@ -136,7 +136,7 @@ function showRangeSelector(topic) {
     const key = `${topic}_${start}_${end}`;
     const saved = storage[key];
     const answeredCount = saved?.states ? saved.states.filter(s => s?.answered).length : 0;
-    const suffix = answeredCount > 0 ? ` (Решено: ${answeredCount}/${end - start})` : '';
+    const suffix = answeredCount > 0 ? ` (Решено: ${answeredCount}/${end - start+1})` : '';
     btn.textContent = `Вопросы ${start}-${end}${suffix}`;
     btn.onclick = () => startQuiz(topic, start, end, filtered.slice(i, end), saved || {});
     container.appendChild(btn);
